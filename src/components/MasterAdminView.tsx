@@ -26,8 +26,8 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
   const [customDomain, setCustomDomain] = useState('');
   const [plan, setPlan] = useState<'Starter' | 'Pro' | 'Enterprise'>('Pro');
   const [status, setStatus] = useState<'Ativo' | 'Bloqueado' | 'Teste'>('Ativo');
-
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   const [toast, setToast] = useState<string | null>(null);
 
   const handleOpenAdd = () => {
@@ -104,7 +104,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
   };
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto">
+    <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto select-none">
       {/* Master banner */}
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-2">
@@ -113,10 +113,10 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
             <span>Laema Soluções Digitais — Painel Master SaaS</span>
           </div>
           <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
-            Gerenciamento Multi-Tenant de Clientes
+            Painel de Administração Master
           </h2>
           <p className="text-slate-600 text-sm leading-relaxed max-w-2xl">
-            Cada cliente possui seu próprio link de acesso exclusivo e workspace independente na sua VPS. Você controla todas as empresas por aqui.
+            Gerencie todas as empresas clientes e supervise as operações multi-tenant do seu SaaS. Cada empresa gerencia seus próprios operadores diretamente no painel interno dela.
           </p>
         </div>
         <button
@@ -146,7 +146,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
             <div className="space-y-1">
               <h3 className="font-bold text-slate-900 text-lg">Nenhuma empresa cliente cadastrada</h3>
               <p className="text-slate-500 text-sm max-w-md mx-auto">
-                O sistema está zerado e pronto para uso real. Cadastre sua primeira empresa para gerar o link exclusivo de acesso.
+                O sistema está zerado e pronto para receber dados reais. Cadastre sua primeira empresa para gerar o link exclusivo.
               </p>
             </div>
             <button
@@ -250,7 +250,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
                   placeholder="Ex: Ambiental Controle de Pragas"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                 />
               </div>
 
@@ -262,7 +262,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
                     placeholder="Ex: Controle de Pragas"
                     value={segment}
                     onChange={(e) => setSegment(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                   />
                 </div>
                 <div>
@@ -272,7 +272,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
                     placeholder="Ex: Carlos Mendes"
                     value={ownerName}
                     onChange={(e) => setOwnerName(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                   />
                 </div>
               </div>
@@ -286,17 +286,17 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
                     placeholder="+55 11 99999-9999"
                     value={whatsappNumber}
                     onChange={(e) => setWhatsappNumber(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Domínio / Link Personalizado</label>
                   <input
                     type="text"
-                    placeholder="ambientalcontroledepragas.com.br"
+                    placeholder="ambientalpragas.com.br"
                     value={customDomain}
                     onChange={(e) => setCustomDomain(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                   />
                 </div>
               </div>
@@ -307,7 +307,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
                   <select
                     value={plan}
                     onChange={(e) => setPlan(e.target.value as any)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                   >
                     <option value="Starter">Starter</option>
                     <option value="Pro">Pro</option>
@@ -319,7 +319,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as any)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
                   >
                     <option value="Ativo">Ativo</option>
                     <option value="Teste">Teste</option>
@@ -338,7 +338,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
+                  className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-xl shadow-sm"
                 >
                   {editingTenant ? 'Salvar Alterações' : 'Criar Empresa no SaaS'}
                 </button>
@@ -356,7 +356,7 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
               <AlertTriangle className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-slate-900 text-base">Confirmar Exclusão</h3>
-            <p className="text-xs text-slate-500">Tem certeza que deseja remover esta empresa cliente da Laema Soluções Digitais?</p>
+            <p className="text-xs text-slate-500">Tem certeza que deseja remover esta empresa cliente?</p>
             <div className="flex justify-center gap-3 pt-2">
               <button
                 onClick={() => setDeleteConfirmId(null)}

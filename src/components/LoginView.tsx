@@ -9,32 +9,52 @@ interface LoginViewProps {
   isClientMode?: boolean;
 }
 
-export const PRESET_USERS: Array<AuthUser & { passwordHash: string }> = [
-  {
-    id: 'user-vilma',
-    name: 'Vilma',
-    username: 'vilma',
-    passwordHash: '@Amb10340',
-    role: 'Atendente',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-  },
-  {
-    id: 'user-mariana',
-    name: 'Mariana',
-    username: 'mariana',
-    passwordHash: '@Amb10340',
-    role: 'Atendente',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-  },
-  {
-    id: 'user-admin',
-    name: 'Administrador',
-    username: 'admin',
-    passwordHash: '@Amb10340',
-    role: 'Super Admin',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-  },
-];
+export const getPresetUsers = (): Array<AuthUser & { passwordHash: string }> => {
+  try {
+    const saved = localStorage.getItem('laema_system_users');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          username: u.username,
+          passwordHash: u.password,
+          role: u.role,
+          avatar: u.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading system users in LoginView', e);
+  }
+  return [
+    {
+      id: 'user-vilma',
+      name: 'Vilma',
+      username: 'vilma',
+      passwordHash: '@Amb10340',
+      role: 'Atendente',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+    },
+    {
+      id: 'user-mariana',
+      name: 'Mariana',
+      username: 'mariana',
+      passwordHash: '@Amb10340',
+      role: 'Atendente',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    },
+    {
+      id: 'user-admin',
+      name: 'Administrador',
+      username: 'admin',
+      passwordHash: '@Amb10340',
+      role: 'Super Admin',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+    },
+  ];
+};
 
 export const LoginView: React.FC<LoginViewProps> = ({
   activeTenant,
@@ -48,13 +68,15 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const presetUsers = getPresetUsers();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setLoading(true);
 
     const trimmedUser = username.trim().toLowerCase();
-    const foundUser = PRESET_USERS.find(
+    const foundUser = presetUsers.find(
       (u) => (u.username.toLowerCase() === trimmedUser || u.name.toLowerCase() === trimmedUser) && u.passwordHash === password
     );
 
@@ -69,7 +91,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }, 350);
   };
 
-  const handleQuickLogin = (preset: typeof PRESET_USERS[0]) => {
+  const handleQuickLogin = (preset: typeof presetUsers[0]) => {
     setUsername(preset.name);
     setPassword(preset.passwordHash);
     setErrorMessage(null);
@@ -85,13 +107,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
           </div>
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
-              Acesso Seguro ao Workspace
+              {activeTenant ? 'Acesso Seguro ao Workspace' : 'Administração Master SaaS'}
             </span>
             <h2 className="text-xl font-bold text-slate-900 mt-2">
-              {activeTenant?.name || 'Workspace do Cliente'}
+              {activeTenant?.name || 'Laema Soluções Digitais'}
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Digite seu usuário e senha autorizados para acessar o painel de atendimento.
+              {activeTenant ? 'Digite seu usuário e senha autorizados para acessar o painel de atendimento.' : 'Faça login com sua conta de Administrador Master para gerenciar o SaaS.'}
             </p>
           </div>
         </div>
@@ -155,24 +177,19 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
           {/* Quick preset chips for convenience */}
           <div className="pt-1">
-            <p className="text-[11px] font-semibold text-slate-500 mb-2">Usuários Configurados para este Projeto:</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin(PRESET_USERS[0])}
-                className="flex-1 py-1.5 px-2 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span>Vilma</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin(PRESET_USERS[1])}
-                className="flex-1 py-1.5 px-2 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span>Mariana</span>
-              </button>
+            <p className="text-[11px] font-semibold text-slate-500 mb-2">Usuários Cadastrados para este Projeto:</p>
+            <div className="flex flex-wrap gap-2">
+              {presetUsers.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handleQuickLogin(preset)}
+                  className="py-1.5 px-3 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>{preset.name}</span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -185,7 +202,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             <span>{loading ? 'Validando...' : 'Entrar no Workspace'}</span>
           </button>
 
-          {!isClientMode && onReturnToMaster && (
+          {!isClientMode && !(typeof window !== 'undefined' && window.location.pathname.startsWith('/app/')) && onReturnToMaster && (
             <div className="text-center pt-2">
               <button
                 type="button"

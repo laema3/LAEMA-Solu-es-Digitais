@@ -48,6 +48,14 @@ export default function App() {
   const [currentView, setCurrentView] = useState<'inbox' | 'dashboard' | 'analytics' | 'kb' | 'customers' | 'settings' | 'visits' | 'chatbot' | 'website' | 'social' | 'master' | 'kanban' | 'flow'>('master');
   const [isClientMode, setIsClientMode] = useState<boolean>(false);
 
+  const [isMasterLoggedIn, setIsMasterLoggedIn] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('laema_master_auth') === 'true';
+    } catch (e) {
+      return true;
+    }
+  });
+
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     try {
       const saved = localStorage.getItem('laema_client_auth');
@@ -68,11 +76,23 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    setCurrentUser(null);
-    try {
-      localStorage.removeItem('laema_client_auth');
-    } catch (e) {
-      console.warn('Error clearing auth from localStorage', e);
+    if (currentView === 'master') {
+      setIsMasterLoggedIn(false);
+      try {
+        localStorage.removeItem('laema_master_auth');
+      } catch (e) {
+        console.warn('Error clearing master auth', e);
+      }
+    } else {
+      setCurrentUser(null);
+      setCurrentView('master');
+      setIsClientMode(false);
+      window.history.pushState(null, '', '/');
+      try {
+        localStorage.removeItem('laema_client_auth');
+      } catch (e) {
+        console.warn('Error clearing client auth', e);
+      }
     }
   };
 
@@ -129,6 +149,7 @@ export default function App() {
     const tenant = tenants.find((t) => t.id === tenantId);
     setActiveTenantId(tenantId);
     setCurrentView('dashboard');
+    setIsClientMode(true);
     if (tenant) {
       window.history.pushState(null, '', `/app/${tenant.slug}`);
     }
@@ -259,6 +280,22 @@ export default function App() {
     }${operatorBadge}`;
   };
 
+  // If in master view and master is not logged in, show Master Login View
+  if (currentView === 'master' && !isMasterLoggedIn) {
+    return (
+      <LoginView
+        activeTenant={null}
+        onLoginSuccess={() => {
+          setIsMasterLoggedIn(true);
+          try {
+            localStorage.setItem('laema_master_auth', 'true');
+          } catch (e) {}
+        }}
+        isClientMode={false}
+      />
+    );
+  }
+
   // If entering a client workspace and user is not logged in, enforce the Login View
   if (currentView !== 'master' && !currentUser) {
     return (
@@ -385,7 +422,7 @@ export default function App() {
 
               {currentView === 'customers' && <CustomersView conversations={conversations} />}
 
-              {currentView === 'settings' && <SettingsView />}
+              {currentView === 'settings' && <SettingsView activeTenant={activeTenant} />}
             </>
           )}
         </main>
