@@ -9,51 +9,73 @@ interface LoginViewProps {
   isClientMode?: boolean;
 }
 
-export const getPresetUsers = (): Array<AuthUser & { passwordHash: string }> => {
+export const getPresetUsers = (tenantId?: string): Array<AuthUser & { passwordHash: string }> => {
   try {
-    const saved = localStorage.getItem('laema_system_users');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((u: any) => ({
-          id: u.id,
-          name: u.name,
-          username: u.username,
-          passwordHash: u.password,
-          role: u.role,
-          avatar: u.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-        }));
+    if (tenantId) {
+      const savedTenantUsers = localStorage.getItem(`laema_tenant_users_${tenantId}`);
+      if (savedTenantUsers) {
+        const parsed = JSON.parse(savedTenantUsers);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            username: u.username,
+            passwordHash: u.password,
+            role: u.role,
+            avatar: u.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+          }));
+        }
       }
+      // Default operators for tenant workspace (Vilman and Mariana, NO master admin)
+      return [
+        {
+          id: 'user-vilma',
+          name: 'Vilma',
+          username: 'vilma',
+          passwordHash: '@Amb10340',
+          role: 'Atendente',
+          avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+        },
+        {
+          id: 'user-mariana',
+          name: 'Mariana',
+          username: 'mariana',
+          passwordHash: '@Amb10340',
+          role: 'Atendente',
+          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+        },
+      ];
+    } else {
+      // Master admin users
+      const savedMaster = localStorage.getItem('laema_master_users');
+      if (savedMaster) {
+        const parsed = JSON.parse(savedMaster);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            username: u.username,
+            passwordHash: u.password,
+            role: u.role,
+            avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          }));
+        }
+      }
+      return [
+        {
+          id: 'user-admin',
+          name: 'Administrador Master',
+          username: 'admin',
+          passwordHash: '@Amb10340',
+          role: 'Super Admin',
+          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        },
+      ];
     }
   } catch (e) {
-    console.warn('Error reading system users in LoginView', e);
+    console.warn('Error reading preset users', e);
   }
-  return [
-    {
-      id: 'user-vilma',
-      name: 'Vilma',
-      username: 'vilma',
-      passwordHash: '@Amb10340',
-      role: 'Atendente',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-    },
-    {
-      id: 'user-mariana',
-      name: 'Mariana',
-      username: 'mariana',
-      passwordHash: '@Amb10340',
-      role: 'Atendente',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    },
-    {
-      id: 'user-admin',
-      name: 'Administrador',
-      username: 'admin',
-      passwordHash: '@Amb10340',
-      role: 'Super Admin',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-    },
-  ];
+  return [];
 };
 
 export const LoginView: React.FC<LoginViewProps> = ({
@@ -68,7 +90,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const presetUsers = getPresetUsers();
+  const presetUsers = getPresetUsers(activeTenant?.id);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,7 +199,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
           {/* Quick preset chips for convenience */}
           <div className="pt-1">
-            <p className="text-[11px] font-semibold text-slate-500 mb-2">Usuários Cadastrados para este Projeto:</p>
+            <p className="text-[11px] font-semibold text-slate-500 mb-2">Atendentes Cadastrados para este Workspace:</p>
             <div className="flex flex-wrap gap-2">
               {presetUsers.map((preset) => (
                 <button
