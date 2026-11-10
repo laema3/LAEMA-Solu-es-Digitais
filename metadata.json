@@ -1,0 +1,6 @@
+{
+  "name": "Laema Soluções Digitais — SaaS Omnichannel CRM",
+  "description": "Plataforma SaaS Multi-Tenant para revenda de CRM omnichannel com WhatsApp por QR Code, IA Gemini e agendamentos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

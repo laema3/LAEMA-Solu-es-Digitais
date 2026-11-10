@@ -1,0 +1,287 @@
+import React, { useState } from 'react';
+import { Sidebar } from './components/Sidebar';
+import { Header } from './components/Header';
+import { DashboardView } from './components/DashboardView';
+import { InboxView } from './components/InboxView';
+import { ChatDetail } from './components/ChatDetail';
+import { AnalyticsView } from './components/AnalyticsView';
+import { KnowledgeBaseView } from './components/KnowledgeBaseView';
+import { CustomersView } from './components/CustomersView';
+import { SettingsView } from './components/SettingsView';
+import { VisitsView } from './components/VisitsView';
+import { ChatbotConfigView } from './components/ChatbotConfigView';
+import { WebsiteIntegrationView } from './components/WebsiteIntegrationView';
+import { SocialPlannerView } from './components/SocialPlannerView';
+import { MasterAdminView } from './components/MasterAdminView';
+import { KanbanView } from './components/KanbanView';
+import { FlowBuilderView } from './components/FlowBuilderView';
+import { NewMessageModal } from './components/NewMessageModal';
+import { INITIAL_CONVERSATIONS, INITIAL_KNOWLEDGE_BASE, INITIAL_VISITS, INITIAL_SOCIAL_POSTS, INITIAL_TENANTS } from './mockData';
+import { Conversation, ChannelType, TicketStatus, Visit, SocialPost, Tenant } from './types';
+
+export default function App() {
+  const [tenants, setTenants] = useState<Tenant[]>(INITIAL_TENANTS);
+  const [activeTenantId, setActiveTenantId] = useState<string>('tenant-1');
+  const [currentView, setCurrentView] = useState<'inbox' | 'dashboard' | 'analytics' | 'kb' | 'customers' | 'settings' | 'visits' | 'chatbot' | 'website' | 'social' | 'master' | 'kanban' | 'flow'>('master');
+  
+  const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
+  const [visits, setVisits] = useState<Visit[]>(INITIAL_VISITS);
+  const [socialPosts, setSocialPosts] = useState<SocialPost[]>(INITIAL_SOCIAL_POSTS);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(INITIAL_CONVERSATIONS[0]?.id || null);
+  const [selectedChannelFilter, setSelectedChannelFilter] = useState<'all' | ChannelType>('all');
+  const [isSimulateModalOpen, setIsSimulateModalOpen] = useState(false);
+  const [defaultSimulateChannel, setDefaultSimulateChannel] = useState<ChannelType>('whatsapp');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const activeTenant = tenants.find((t) => t.id === activeTenantId) || null;
+  const unreadTotal = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+  const activeConversation = conversations.find((c) => c.id === activeConversationId) || null;
+
+  const handleSelectTenantWorkspace = (tenantId: string) => {
+    setActiveTenantId(tenantId);
+    setCurrentView('dashboard');
+  };
+
+  const handleAddTenant = (newTenant: Tenant) => {
+    setTenants((prev) => [newTenant, ...prev]);
+  };
+
+  const handleUpdateTenant = (updated: Tenant) => {
+    setTenants((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+  };
+
+  const handleDeleteTenant = (id: string) => {
+    setTenants((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleSelectConversation = (id: string) => {
+    setActiveConversationId(id);
+    setCurrentView('inbox');
+    setConversations((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
+    );
+  };
+
+  const handleSendMessage = (text: string, attachments?: string[]) => {
+    if (!activeConversationId) return;
+
+    const newMessage = {
+      id: `m-${Date.now()}`,
+      sender: 'agent' as const,
+      senderName: 'Carlos Mendes',
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      channel: activeConversation ? activeConversation.channel : ('whatsapp' as ChannelType),
+      attachments,
+    };
+
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === activeConversationId) {
+          return {
+            ...c,
+            lastMessageTime: 'Agora mesmo',
+            messages: [...c.messages, newMessage],
+          };
+        }
+        return c;
+      })
+    );
+  };
+
+  const handleUpdateStatus = (status: TicketStatus) => {
+    if (!activeConversationId) return;
+    setConversations((prev) =>
+      prev.map((c) => (c.id === activeConversationId ? { ...c, status } : c))
+    );
+  };
+
+  const handleAddNote = (note: string) => {
+    if (!activeConversationId) return;
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === activeConversationId) {
+          const notes = c.notes ? [...c.notes, note] : [note];
+          return { ...c, notes };
+        }
+        return c;
+      })
+    );
+  };
+
+  const handleAddConversation = (newConv: Conversation) => {
+    setConversations((prev) => [newConv, ...prev]);
+    setActiveConversationId(newConv.id);
+    setCurrentView('inbox');
+  };
+
+  const handleAddVisit = (newVisit: Visit) => {
+    setVisits((prev) => [newVisit, ...prev]);
+  };
+
+  const handleUpdateVisit = (updatedVisit: Visit) => {
+    setVisits((prev) => prev.map((v) => (v.id === updatedVisit.id ? updatedVisit : v)));
+  };
+
+  const handleDeleteVisit = (id: string) => {
+    setVisits((prev) => prev.filter((v) => v.id !== id));
+  };
+
+  const handleUpdateVisitStatus = (id: string, status: Visit['status']) => {
+    setVisits((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, status } : v))
+    );
+  };
+
+  const handleAddSocialPost = (post: SocialPost) => {
+    setSocialPosts((prev) => [post, ...prev]);
+  };
+
+  const handleDeleteSocialPost = (id: string) => {
+    setSocialPosts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const getViewTitle = () => {
+    if (currentView === 'master') {
+      return 'Laema Soluções Digitais — Painel Master SaaS';
+    }
+    return `${activeTenant?.name || 'Cliente'} — ${
+      currentView === 'dashboard' ? 'Visão Geral' :
+      currentView === 'inbox' ? 'Caixa de Entrada' :
+      currentView === 'kanban' ? 'Kanban de Atendimento' :
+      currentView === 'visits' ? 'Visitas Técnicas' :
+      currentView === 'flow' ? 'Fluxo de Conversas' :
+      currentView === 'social' ? 'Planejador Social' :
+      currentView === 'chatbot' ? 'Chatbot Auto-Pilot' :
+      currentView === 'website' ? 'Integração Site' :
+      currentView === 'analytics' ? 'Relatórios & CSAT' :
+      currentView === 'kb' ? 'Base de Conhecimento' :
+      currentView === 'customers' ? 'Clientes CRM' : 'Configurações'
+    }`;
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-100 font-sans text-slate-900 overflow-hidden">
+      <Sidebar
+        currentView={currentView}
+        setCurrentView={setCurrentView}
+        unreadTotal={unreadTotal}
+        activeTenant={activeTenant}
+        onReturnToMaster={() => setCurrentView('master')}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Header
+          currentViewTitle={getViewTitle()}
+          onOpenSimulateModal={(ch) => {
+            if (ch) setDefaultSimulateChannel(ch);
+            setIsSimulateModalOpen(true);
+          }}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
+
+        <main className="flex-1 flex overflow-hidden">
+          {currentView === 'master' ? (
+            <MasterAdminView
+              tenants={tenants}
+              onAddTenant={handleAddTenant}
+              onUpdateTenant={handleUpdateTenant}
+              onDeleteTenant={handleDeleteTenant}
+              onSelectTenantWorkspace={handleSelectTenantWorkspace}
+            />
+          ) : (
+            <>
+              {currentView === 'dashboard' && (
+                <DashboardView
+                  conversations={conversations}
+                  visits={visits}
+                  onSelectConversation={handleSelectConversation}
+                  onNavigate={setCurrentView}
+                />
+              )}
+
+              {currentView === 'inbox' && (
+                <div className="flex-1 flex overflow-hidden">
+                  <InboxView
+                    conversations={conversations}
+                    activeConversationId={activeConversationId}
+                    onSelectConversation={handleSelectConversation}
+                    selectedChannelFilter={selectedChannelFilter}
+                    setSelectedChannelFilter={setSelectedChannelFilter}
+                  />
+                  {activeConversation ? (
+                    <ChatDetail
+                      conversation={activeConversation}
+                      onSendMessage={handleSendMessage}
+                      onUpdateStatus={handleUpdateStatus}
+                      onAddNote={handleAddNote}
+                    />
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center bg-slate-50 text-slate-400 text-sm">
+                      Selecione uma conversa para iniciar o atendimento.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {currentView === 'kanban' && (
+                <KanbanView
+                  conversations={conversations}
+                  onSelectConversation={handleSelectConversation}
+                  onUpdateStatus={(id, st) => {
+                    setConversations(prev => prev.map(c => c.id === id ? { ...c, status: st } : c));
+                  }}
+                />
+              )}
+
+              {currentView === 'visits' && (
+                <VisitsView
+                  visits={visits}
+                  onAddVisit={handleAddVisit}
+                  onUpdateVisit={handleUpdateVisit}
+                  onDeleteVisit={handleDeleteVisit}
+                  onUpdateVisitStatus={handleUpdateVisitStatus}
+                />
+              )}
+
+              {currentView === 'flow' && <FlowBuilderView />}
+
+              {currentView === 'social' && (
+                <SocialPlannerView
+                  posts={socialPosts}
+                  onAddPost={handleAddSocialPost}
+                  onDeletePost={handleDeleteSocialPost}
+                />
+              )}
+
+              {currentView === 'chatbot' && <ChatbotConfigView knowledgeBase={INITIAL_KNOWLEDGE_BASE} />}
+
+              {currentView === 'website' && (
+                <WebsiteIntegrationView
+                  onAddConversation={handleAddConversation}
+                  onAddVisit={handleAddVisit}
+                />
+              )}
+
+              {currentView === 'analytics' && <AnalyticsView />}
+
+              {currentView === 'kb' && <KnowledgeBaseView knowledgeBase={INITIAL_KNOWLEDGE_BASE} />}
+
+              {currentView === 'customers' && <CustomersView conversations={conversations} />}
+
+              {currentView === 'settings' && <SettingsView />}
+            </>
+          )}
+        </main>
+      </div>
+
+      <NewMessageModal
+        isOpen={isSimulateModalOpen}
+        onClose={() => setIsSimulateModalOpen(false)}
+        onAddConversation={handleAddConversation}
+        defaultChannel={defaultSimulateChannel}
+      />
+    </div>
+  );
+}
