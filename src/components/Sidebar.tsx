@@ -1,6 +1,6 @@
 import React from 'react';
-import { MessageSquare, BarChart3, BookOpen, Users, Settings, Sparkles, Layers, Calendar, Bot, Globe, Share2, Shield, ArrowLeft, Columns, GitBranch } from 'lucide-react';
-import { Tenant } from '../types';
+import { MessageSquare, BarChart3, BookOpen, Users, Settings, Sparkles, Layers, Calendar, Bot, Globe, Share2, Shield, ArrowLeft, Columns, GitBranch, LogOut } from 'lucide-react';
+import { Tenant, AuthUser } from '../types';
 
 interface SidebarProps {
   currentView: 'inbox' | 'dashboard' | 'analytics' | 'kb' | 'customers' | 'settings' | 'visits' | 'chatbot' | 'website' | 'social' | 'master' | 'kanban' | 'flow';
@@ -9,6 +9,8 @@ interface SidebarProps {
   activeTenant: Tenant | null;
   onReturnToMaster: () => void;
   isClientMode?: boolean;
+  currentUser?: AuthUser | null;
+  onLogout?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -18,6 +20,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTenant,
   onReturnToMaster,
   isClientMode = false,
+  currentUser = null,
+  onLogout,
 }) => {
   const clientNavItems = [
     { id: 'dashboard', label: 'Visão Geral', icon: Layers },
@@ -116,21 +120,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Footer user profile */}
-      <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-        <div className="flex items-center gap-3">
+      <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
             <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"
-              alt="Administrador Laema"
+              src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"}
+              alt={currentUser?.name || "Administrador Laema"}
               className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm"
             />
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-slate-900 truncate">Laema Soluções</p>
-            <p className="text-[11px] text-slate-500 truncate">Super Admin SaaS</p>
+            <p className="text-xs font-semibold text-slate-900 truncate">
+              {currentUser?.name || (isClientMode ? 'Atendente' : 'Laema Soluções')}
+            </p>
+            <p className="text-[11px] text-slate-500 truncate">
+              {currentUser?.role || (isClientMode ? 'Operador' : 'Super Admin SaaS')}
+            </p>
           </div>
         </div>
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors ml-1 shrink-0"
+            title="Sair do Workspace"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </aside>
   );

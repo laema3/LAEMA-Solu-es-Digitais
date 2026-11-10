@@ -16,8 +16,9 @@ import { MasterAdminView } from './components/MasterAdminView';
 import { KanbanView } from './components/KanbanView';
 import { FlowBuilderView } from './components/FlowBuilderView';
 import { NewMessageModal } from './components/NewMessageModal';
+import { LoginView } from './components/LoginView';
 import { INITIAL_CONVERSATIONS, INITIAL_KNOWLEDGE_BASE, INITIAL_VISITS, INITIAL_SOCIAL_POSTS, INITIAL_TENANTS } from './mockData';
-import { Conversation, ChannelType, TicketStatus, Visit, SocialPost, Tenant } from './types';
+import { Conversation, ChannelType, TicketStatus, Visit, SocialPost, Tenant, AuthUser } from './types';
 
 export default function App() {
   const [tenants, setTenants] = useState<Tenant[]>(() => {
@@ -46,6 +47,34 @@ export default function App() {
   const [activeTenantId, setActiveTenantId] = useState<string>('');
   const [currentView, setCurrentView] = useState<'inbox' | 'dashboard' | 'analytics' | 'kb' | 'customers' | 'settings' | 'visits' | 'chatbot' | 'website' | 'social' | 'master' | 'kanban' | 'flow'>('master');
   const [isClientMode, setIsClientMode] = useState<boolean>(false);
+
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('laema_client_auth');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error reading auth from localStorage', e);
+    }
+    return null;
+  });
+
+  const handleLoginSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('laema_client_auth', JSON.stringify(user));
+    } catch (e) {
+      console.warn('Error saving auth to localStorage', e);
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('laema_client_auth');
+    } catch (e) {
+      console.warn('Error clearing auth from localStorage', e);
+    }
+  };
 
   // Sync tenants to localStorage
   useEffect(() => {
@@ -137,7 +166,7 @@ export default function App() {
     const newMessage = {
       id: `m-${Date.now()}`,
       sender: 'agent' as const,
-      senderName: activeTenant?.ownerName || 'Atendente',
+      senderName: currentUser?.name || activeTenant?.ownerName || 'Atendente',
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       channel: activeConversation ? activeConversation.channel : ('whatsapp' as ChannelType),
@@ -214,6 +243,7 @@ export default function App() {
     if (currentView === 'master') {
       return 'Laema Soluções Digitais — Painel Master SaaS';
     }
+    const operatorBadge = currentUser ? ` [${currentUser.name}]` : '';
     return `${activeTenant?.name || 'Cliente'} — ${
       currentView === 'dashboard' ? 'Visão Geral' :
       currentView === 'inbox' ? 'Caixa de Entrada' :
@@ -226,8 +256,20 @@ export default function App() {
       currentView === 'analytics' ? 'Relatórios & CSAT' :
       currentView === 'kb' ? 'Base de Conhecimento' :
       currentView === 'customers' ? 'Clientes CRM' : 'Configurações'
-    }`;
+    }${operatorBadge}`;
   };
+
+  // If entering a client workspace and user is not logged in, enforce the Login View
+  if (currentView !== 'master' && !currentUser) {
+    return (
+      <LoginView
+        activeTenant={activeTenant}
+        onLoginSuccess={handleLoginSuccess}
+        onReturnToMaster={handleReturnToMaster}
+        isClientMode={isClientMode}
+      />
+    );
+  }
 
   return (
     <div className="flex h-screen bg-slate-100 font-sans text-slate-900 overflow-hidden">
@@ -238,6 +280,8 @@ export default function App() {
         activeTenant={activeTenant}
         onReturnToMaster={handleReturnToMaster}
         isClientMode={isClientMode}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

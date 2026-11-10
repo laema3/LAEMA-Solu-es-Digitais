@@ -78,3 +78,12 @@ export interface Tenant {
   customDomain: string; // e.g. "ambientalcontroledepragas.com.br"
   createdAt: string;
 }
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  username: string;
+  role: 'Atendente' | 'Super Admin';
+  avatar: string;
+}
+
