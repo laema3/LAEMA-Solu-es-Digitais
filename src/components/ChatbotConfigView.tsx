@@ -10,7 +10,7 @@ export const ChatbotConfigView: React.FC<ChatbotConfigViewProps> = ({ knowledgeB
   const [botEnabled, setBotEnabled] = useState(true);
   const [testMessage, setTestMessage] = useState('');
   const [testChatLog, setTestChatLog] = useState<Array<{ sender: 'user' | 'bot'; text: string }>>([
-    { sender: 'bot', text: 'Olá! Sou o assistente virtual da Ambiental Controle de Pragas. Como posso ajudar com dedetização ou agendamento de visita hoje?' }
+    { sender: 'bot', text: 'Olá! Sou o assistente virtual. Como posso ajudar você hoje?' }
   ]);
   const [loading, setLoading] = useState(false);
 
@@ -73,10 +73,10 @@ export const ChatbotConfigView: React.FC<ChatbotConfigViewProps> = ({ knowledgeB
             <p className="font-bold text-slate-900 uppercase tracking-wider">Diretrizes da IA</p>
             <ul className="space-y-2 text-slate-600">
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Responder dúvidas sobre dedetização, cupins e ratos
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Responder dúvidas sobre produtos e serviços da empresa
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Coletar endereço e telefone para agendamento
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Coletar contato e informações para atendimento
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Transmitir chat para atendente humano quando solicitado

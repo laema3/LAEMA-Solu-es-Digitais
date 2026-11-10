@@ -96,7 +96,8 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
   };
 
   const handleCopyClientLink = (slug: string) => {
-    const link = `https://laemasolucoes.com.br/app/${slug}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://laemasolucoes.com.br';
+    const link = `${origin}/app/${slug}`;
     navigator.clipboard.writeText(link);
     setToast(`Link de acesso copiado: ${link}`);
     setTimeout(() => setToast(null), 3000);
@@ -137,77 +138,100 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
       <div className="space-y-4">
         <h3 className="text-base font-bold text-slate-900">Empresas Clientes Cadastradas ({tenants.length})</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tenants.map((tenant) => (
-            <div key={tenant.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:border-slate-300 transition-all flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase ${
-                    tenant.status === 'Ativo' ? 'bg-emerald-100 text-emerald-800' :
-                    tenant.status === 'Teste' ? 'bg-purple-100 text-purple-800' : 'bg-rose-100 text-rose-800'
-                  }`}>
-                    {tenant.status}
-                  </span>
-                  <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
-                    Plano {tenant.plan}
-                  </span>
+        {tenants.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 border border-dashed border-slate-300 text-center space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
+              <Plus className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-slate-900 text-lg">Nenhuma empresa cliente cadastrada</h3>
+              <p className="text-slate-500 text-sm max-w-md mx-auto">
+                O sistema está zerado e pronto para uso real. Cadastre sua primeira empresa para gerar o link exclusivo de acesso.
+              </p>
+            </div>
+            <button
+              onClick={handleOpenAdd}
+              className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Cadastrar Primeira Empresa</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tenants.map((tenant) => (
+              <div key={tenant.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:border-slate-300 transition-all flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase ${
+                      tenant.status === 'Ativo' ? 'bg-emerald-100 text-emerald-800' :
+                      tenant.status === 'Teste' ? 'bg-purple-100 text-purple-800' : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {tenant.status}
+                    </span>
+                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
+                      Plano {tenant.plan}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">{tenant.name}</h3>
+                    <p className="text-xs font-medium text-slate-600 mt-0.5">{tenant.segment}</p>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
+                    <p className="flex items-center gap-2 truncate">
+                      <Users className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span>Resp: <strong>{tenant.ownerName}</strong></span>
+                    </p>
+                    <p className="flex items-center gap-2 truncate">
+                      <Smartphone className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span>WhatsApp: {tenant.whatsappNumber}</span>
+                    </p>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-slate-900 font-mono text-[11px] truncate">
+                        {(typeof window !== 'undefined' ? window.location.host : 'laemasolucoes.com.br')}/app/{tenant.slug}
+                      </span>
+                      <button
+                        onClick={() => handleCopyClientLink(tenant.slug)}
+                        className="p-1 text-slate-500 hover:text-slate-900 rounded border border-slate-200 bg-white"
+                        title="Copiar link de acesso do cliente"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base">{tenant.name}</h3>
-                  <p className="text-xs font-medium text-slate-600 mt-0.5">{tenant.segment}</p>
-                </div>
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => onSelectTenantWorkspace(tenant.id)}
+                    className="flex-1 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold transition-colors text-center shadow-sm"
+                  >
+                    Acessar Workspace
+                  </button>
 
-                <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                  <p className="flex items-center gap-2 truncate">
-                    <Users className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>Resp: <strong>{tenant.ownerName}</strong></span>
-                  </p>
-                  <p className="flex items-center gap-2 truncate">
-                    <Smartphone className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>WhatsApp: {tenant.whatsappNumber}</span>
-                  </p>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-slate-900 font-mono text-[11px] truncate">laemasolucoes.com.br/app/{tenant.slug}</span>
+                  <div className="flex items-center gap-1">
                     <button
-                      onClick={() => handleCopyClientLink(tenant.slug)}
-                      className="p-1 text-slate-500 hover:text-slate-900 rounded border border-slate-200 bg-white"
-                      title="Copiar link de acesso do cliente"
+                      onClick={() => handleOpenEdit(tenant)}
+                      className="p-2 text-slate-600 hover:text-slate-900 rounded-lg border border-slate-200 bg-white"
+                      title="Editar Empresa"
                     >
-                      <Copy className="w-3.5 h-3.5" />
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(tenant.id)}
+                      className="p-2 text-slate-600 hover:text-rose-600 rounded-lg border border-slate-200 bg-white"
+                      title="Excluir Empresa"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
               </div>
-
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => onSelectTenantWorkspace(tenant.id)}
-                  className="flex-1 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold transition-colors text-center shadow-sm"
-                >
-                  Acessar Workspace
-                </button>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleOpenEdit(tenant)}
-                    className="p-2 text-slate-600 hover:text-slate-900 rounded-lg border border-slate-200 bg-white"
-                    title="Editar Empresa"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirmId(tenant.id)}
-                    className="p-2 text-slate-600 hover:text-rose-600 rounded-lg border border-slate-200 bg-white"
-                    title="Excluir Empresa"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Add / Edit Tenant Modal */}

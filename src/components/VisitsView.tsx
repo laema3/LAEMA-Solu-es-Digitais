@@ -119,8 +119,28 @@ export const VisitsView: React.FC<VisitsViewProps> = ({
       )}
 
       {/* Visits list */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {visits.map((visit) => (
+      {visits.length === 0 ? (
+        <div className="bg-white rounded-2xl p-12 border border-dashed border-slate-300 text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mx-auto">
+            <Calendar className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-slate-900 text-lg">Nenhuma visita técnica agendada</h3>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              Não há visitas cadastradas no momento. Clique no botão abaixo para agendar a primeira visita.
+            </p>
+          </div>
+          <button
+            onClick={handleOpenAdd}
+            className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Cadastrar Primeira Visita</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {visits.map((visit) => (
           <div key={visit.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:border-emerald-300 transition-all flex flex-col justify-between">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -193,6 +213,7 @@ export const VisitsView: React.FC<VisitsViewProps> = ({
           </div>
         ))}
       </div>
+      )}
 
       {/* Add / Edit Visit Modal */}
       {isModalOpen && (

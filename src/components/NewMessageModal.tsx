@@ -64,7 +64,7 @@ export const NewMessageModal: React.FC<NewMessageModalProps> = ({
       urgencyScore,
       unreadCount: 1,
       lastMessageTime: 'Agora mesmo',
-      assignedAgent: 'Carlos Mendes',
+      assignedAgent: 'Atendente',
       tags: ['Novo Lead', channel === 'whatsapp' ? 'WhatsApp' : channel === 'instagram' ? 'Instagram' : 'E-mail'],
       company: company || 'Empresa Cliente',
       messages: [

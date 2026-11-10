@@ -116,7 +116,7 @@ export const SettingsView: React.FC = () => {
                   {connectedInstagram ? 'Conectado' : 'Desconectado'}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">Conta: @ambientalcontroledepragas</p>
+              <p className="text-xs text-slate-500 mt-0.5">Direct Message integrado com a Meta API</p>
             </div>
           </div>
           <button
@@ -142,7 +142,7 @@ export const SettingsView: React.FC = () => {
                   {connectedEmail ? 'Conectado' : 'Desconectado'}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">contato@ambientalcontroledepragas.com.br</p>
+              <p className="text-xs text-slate-500 mt-0.5">Caixa de entrada de e-mails corporativos</p>
             </div>
           </div>
           <button

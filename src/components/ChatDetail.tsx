@@ -44,7 +44,7 @@ export const ChatDetail: React.FC<ChatDetailProps> = ({
           channel: conversation.channel,
           lastMessage: lastMsg,
           conversationHistory: conversation.messages.slice(-4),
-          companyContext: 'Ambiental Controle de Pragas (Dedetização, Desratização e Descupinização)',
+          companyContext: conversation.company || 'Atendimento ao Cliente',
         }),
       });
       const data = await res.json();

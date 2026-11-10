@@ -22,8 +22,8 @@ geminiRouter.post("/suggest-reply", async (req, res) => {
   try {
     const { customerName, channel, lastMessage, conversationHistory, companyContext } = req.body;
     
-    const prompt = `Você é um assistente de atendimento ao cliente sênior para a empresa "Ambiental Controle de Pragas" no Brasil.
-Contexto da empresa: ${companyContext || "Ambiental Controle de Pragas (Dedetização, Desratização, Descupinização e Sanitização)"}
+    const prompt = `Você é um assistente de atendimento ao cliente sênior.
+Contexto da empresa: ${companyContext || "Central de Atendimento ao Cliente"}
 Cliente: ${customerName}
 Canal: ${channel} (WhatsApp, Instagram ou E-mail)
 Última mensagem do cliente: "${lastMessage}"
@@ -34,8 +34,8 @@ Escreva 3 opções de resposta profissional, empática e prestativa em portuguê
 Formate a resposta estritamente como um objeto JSON válido com a seguinte estrutura:
 {
   "suggestions": [
-    { "title": "Orçamento / Visita", "text": "..." },
-    { "title": "Técnica / Cuidados", "text": "..." },
+    { "title": "Orçamento / Agendamento", "text": "..." },
+    { "title": "Informação / Esclarecimento", "text": "..." },
     { "title": "Confirmação", "text": "..." }
   ]
 }`;
@@ -45,7 +45,7 @@ Formate a resposta estritamente como um objeto JSON válido com a seguinte estru
       contents: prompt,
       config: {
         responseMimeType: "application/json",
-        systemInstruction: "Você é um especialista em atendimento de controle de pragas urbano focando em segurança, agilidade e agendamento de visitas.",
+        systemInstruction: "Você é um especialista em atendimento omnichannel com foco em excelência, clareza e agilidade.",
       },
     });
 
@@ -60,8 +60,9 @@ Formate a resposta estritamente como um objeto JSON válido com a seguinte estru
 
 geminiRouter.post("/chatbot", async (req, res) => {
   try {
-    const { message, conversationHistory, knowledgeBase } = req.body;
-    const prompt = `Você é o assistente virtual automatizado da empresa "Ambiental Controle de Pragas" (site: https://ambientalcontroledepragas.com.br). Sua função é atender clientes no WhatsApp, Instagram e Widget do site com simpatia, agilidade e precisão técnica quando a equipe humana estiver offline.
+    const { message, conversationHistory, knowledgeBase, companyContext } = req.body;
+    const prompt = `Você é o assistente virtual automatizado da empresa. Sua função é atender clientes no WhatsApp, Instagram e Widget do site com simpatia, agilidade e precisão técnica quando a equipe humana estiver offline.
+Contexto da empresa: ${companyContext || "Atendimento ao Cliente"}
 Base de Conhecimento da empresa:
 ${JSON.stringify(knowledgeBase)}
 
@@ -70,13 +71,13 @@ ${JSON.stringify(conversationHistory || [])}
 
 Mensagem do cliente: "${message}"
 
-Responda como o bot da Ambiental Controle de Pragas. Se o cliente quiser agendar uma visita (dedetização, desratização, descupinização), oriente cordialmente sobre os dados necessários (endereço, tipo de praga, melhor dia e período) e informe que nossa equipe confirmará o agendamento em instantes. Responda em português do Brasil.`;
+Responda como o bot da empresa. Se o cliente quiser agendar um atendimento ou solicitar orçamento, oriente cordialmente sobre os dados necessários e informe que nossa equipe confirmará em instantes. Responda em português do Brasil.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.8-flash",
       contents: prompt,
       config: {
-        systemInstruction: "Você é o assistente virtual oficial da Ambiental Controle de Pragas. Seja prestativo, profissional e resolutivo.",
+        systemInstruction: "Você é o assistente virtual oficial da empresa. Seja prestativo, profissional e resolutivo.",
       },
     });
 
@@ -90,8 +91,8 @@ Responda como o bot da Ambiental Controle de Pragas. Se o cliente quiser agendar
 geminiRouter.post("/generate-caption", async (req, res) => {
   try {
     const { topic } = req.body;
-    const prompt = `Crie uma legenda cativante, profissional e otimizada para redes sociais (Instagram e Facebook) para a empresa "Ambiental Controle de Pragas" (site: https://ambientalcontroledepragas.com.br) sobre o seguinte tema: "${topic || 'Prevenção de baratas e formigas em residências'}".
-Inclua hashtags populares de controle de pragas, uma chamada para ação (CTA) para o cliente agendar uma visita técnica ou chamar no WhatsApp. Responda apenas com o texto da legenda pronta para publicar.`;
+    const prompt = `Crie uma legenda cativante, profissional e otimizada para redes sociais (Instagram e Facebook) sobre o seguinte tema: "${topic || 'Novidades e dicas para nossos clientes'}".
+Inclua hashtags populares, uma chamada para ação (CTA) para o cliente entrar em contato ou chamar no WhatsApp. Responda apenas com o texto da legenda pronta para publicar.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.8-flash",

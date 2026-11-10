@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
         <Search className="w-4 h-4 text-slate-400 absolute left-3" />
         <input
           type="text"
-          placeholder="Buscar clientes, pragas ou agendamentos..."
+          placeholder="Buscar clientes, conversas ou agendamentos..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-9 pr-4 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-slate-800 placeholder-slate-400"

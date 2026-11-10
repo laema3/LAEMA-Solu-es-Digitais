@@ -51,37 +51,49 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ conversations }) =
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {customers.map((cust, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:border-emerald-300 transition-all">
-            <div className="flex items-center gap-3.5">
-              <img src={cust.avatar} alt={cust.name} className="w-14 h-14 rounded-full object-cover border-2 border-slate-100 shadow-sm" />
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">{cust.name}</h3>
-                <span className="inline-flex items-center gap-1 text-xs text-slate-500 mt-0.5">
-                  <Building className="w-3.5 h-3.5" /> {cust.company}
+      {customers.length === 0 ? (
+        <div className="bg-white rounded-2xl p-12 border border-dashed border-slate-300 text-center space-y-3">
+          <div className="w-16 h-16 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto">
+            <Users className="w-8 h-8" />
+          </div>
+          <h3 className="font-bold text-slate-900 text-lg">Nenhum cliente cadastrado ainda</h3>
+          <p className="text-slate-500 text-sm max-w-md mx-auto">
+            Os contatos e clientes serão listados aqui automaticamente conforme entrarem mensagens via WhatsApp, Instagram, E-mail ou Site.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {customers.map((cust, idx) => (
+            <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:border-emerald-300 transition-all">
+              <div className="flex items-center gap-3.5">
+                <img src={cust.avatar} alt={cust.name} className="w-14 h-14 rounded-full object-cover border-2 border-slate-100 shadow-sm" />
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">{cust.name}</h3>
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                    <Building className="w-3.5 h-3.5" /> {cust.company}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-3 border-t border-slate-100 text-xs text-slate-600">
+                <p className="flex items-center gap-2 truncate">
+                  <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" /> <span className="truncate">{cust.email}</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" /> <span>{cust.phone}</span>
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] uppercase font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                  Canal Principal: {cust.channel}
                 </span>
+                <span className="text-xs text-slate-500 font-medium">Ativo no CRM</span>
               </div>
             </div>
-
-            <div className="space-y-2 pt-3 border-t border-slate-100 text-xs text-slate-600">
-              <p className="flex items-center gap-2 truncate">
-                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" /> <span className="truncate">{cust.email}</span>
-              </p>
-              <p className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" /> <span>{cust.phone}</span>
-              </p>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-[11px] uppercase font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
-                Canal Principal: {cust.channel}
-              </span>
-              <span className="text-xs text-slate-500 font-medium">Ativo no CRM</span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

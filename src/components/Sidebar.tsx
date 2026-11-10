@@ -8,6 +8,7 @@ interface SidebarProps {
   unreadTotal: number;
   activeTenant: Tenant | null;
   onReturnToMaster: () => void;
+  isClientMode?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -16,6 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   unreadTotal,
   activeTenant,
   onReturnToMaster,
+  isClientMode = false,
 }) => {
   const clientNavItems = [
     { id: 'dashboard', label: 'Visão Geral', icon: Layers },
@@ -40,8 +42,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Sparkles className="w-5 h-5" />
         </div>
         <div className="min-w-0">
-          <h1 className="font-bold text-slate-900 tracking-tight text-xs truncate">Laema Soluções</h1>
-          <p className="text-[10px] text-purple-600 font-medium truncate">SaaS Multi-Tenant CRM</p>
+          <h1 className="font-bold text-slate-900 tracking-tight text-xs truncate">
+            {isClientMode && activeTenant ? activeTenant.name : 'Laema Soluções'}
+          </h1>
+          <p className="text-[10px] text-purple-600 font-medium truncate">
+            {isClientMode ? 'Workspace Omnichannel' : 'SaaS Multi-Tenant CRM'}
+          </p>
         </div>
       </div>
 
@@ -50,12 +56,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-3 bg-purple-50 border-b border-purple-100 flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">Cliente Ativo</span>
-            <button
-              onClick={onReturnToMaster}
-              className="flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold"
-            >
-              <ArrowLeft className="w-3 h-3" /> Painel Master
-            </button>
+            {!isClientMode && (
+              <button
+                onClick={onReturnToMaster}
+                className="flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold"
+              >
+                <ArrowLeft className="w-3 h-3" /> Painel Master
+              </button>
+            )}
           </div>
           <p className="text-xs font-bold text-slate-900 truncate">{activeTenant.name}</p>
         </div>
@@ -63,19 +71,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation menu */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <button
-          onClick={onReturnToMaster}
-          className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold mb-3 transition-colors ${
-            currentView === 'master'
-              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
-              : 'bg-slate-100 text-slate-800 hover:bg-slate-200/70 border border-slate-200'
-          }`}
-        >
-          <Shield className={`w-4 h-4 ${currentView === 'master' ? 'text-white' : 'text-purple-600'}`} />
-          <span>Painel Master (Laema)</span>
-        </button>
+        {!isClientMode && (
+          <button
+            onClick={onReturnToMaster}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold mb-3 transition-colors ${
+              currentView === 'master'
+                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                : 'bg-slate-100 text-slate-800 hover:bg-slate-200/70 border border-slate-200'
+            }`}
+          >
+            <Shield className={`w-4 h-4 ${currentView === 'master' ? 'text-white' : 'text-purple-600'}`} />
+            <span>Painel Master (Laema)</span>
+          </button>
+        )}
 
-        <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Workspace do Cliente</p>
+        <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+          {isClientMode ? 'Menu do Sistema' : 'Workspace do Cliente'}
+        </p>
         {clientNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;

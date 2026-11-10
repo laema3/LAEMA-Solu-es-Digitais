@@ -20,7 +20,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({ conversations, onSelectC
     <div className="p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto flex-1 flex flex-col">
       <div>
         <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Kanban de Atendimento & Vendas</h2>
-        <p className="text-slate-500 text-sm mt-1">Acompanhe visualmente o funil de atendimento dos clientes da Ambiental Controle de Pragas.</p>
+        <p className="text-slate-500 text-sm mt-1">Acompanhe visualmente o funil de atendimento dos clientes em tempo real.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 flex-1 items-start">

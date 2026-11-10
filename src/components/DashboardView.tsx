@@ -1,12 +1,13 @@
 import React from 'react';
 import { MessageSquare, Clock, CheckCircle2, TrendingUp, Users, Sparkles, ArrowUpRight, ShieldCheck, Calendar, Globe } from 'lucide-react';
-import { Conversation, Visit } from '../types';
+import { Conversation, Visit, Tenant } from '../types';
 
 interface DashboardViewProps {
   conversations: Conversation[];
   visits: Visit[];
   onSelectConversation: (id: string) => void;
   onNavigate: (view: 'inbox' | 'analytics' | 'kb' | 'customers' | 'settings' | 'visits' | 'chatbot' | 'website' | 'social' | 'master' | 'kanban' | 'flow') => void;
+  activeTenant?: Tenant | null;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -14,6 +15,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   visits,
   onSelectConversation,
   onNavigate,
+  activeTenant,
 }) => {
   const totalOpen = conversations.filter((c) => c.status === 'open').length;
   const confirmedVisits = visits.filter((v) => v.status === 'Confirmado pelo Cliente').length;
@@ -32,13 +34,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="space-y-2 max-w-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-semibold border border-slate-200">
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-            <span>Ambiental Controle de Pragas — Central Omnichannel</span>
+            <span>{activeTenant?.name || 'Central de Atendimento'} — Workspace Ativo</span>
           </div>
           <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
             WhatsApp, Instagram, E-mail & Site Unificados
           </h2>
           <p className="text-slate-600 text-sm leading-relaxed">
-            Gerencie solicitações de dedetização e agendamentos de visitas técnicas com inteligência artificial Gemini respondendo automaticamente fora do expediente.
+            Gerencie solicitações, conversas e agendamentos de visitas técnicas com inteligência artificial Gemini respondendo automaticamente fora do expediente.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -126,7 +128,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <span className="font-bold text-slate-900 tabular-nums">{whatsappCount}</span>
               </div>
               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(whatsappCount / conversations.length) * 100}%` }}></div>
+                <div className="h-full bg-emerald-500 rounded-full" style={{ width: conversations.length > 0 ? `${(whatsappCount / conversations.length) * 100}%` : '0%' }}></div>
               </div>
             </div>
 
@@ -138,7 +140,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <span className="font-bold text-slate-900 tabular-nums">{instagramCount}</span>
               </div>
               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-purple-500 rounded-full" style={{ width: `${(instagramCount / conversations.length) * 100}%` }}></div>
+                <div className="h-full bg-purple-500 rounded-full" style={{ width: conversations.length > 0 ? `${(instagramCount / conversations.length) * 100}%` : '0%' }}></div>
               </div>
             </div>
 
@@ -150,7 +152,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <span className="font-bold text-slate-900 tabular-nums">{websiteCount}</span>
               </div>
               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(websiteCount / conversations.length) * 100}%` }}></div>
+                <div className="h-full bg-indigo-500 rounded-full" style={{ width: conversations.length > 0 ? `${(websiteCount / conversations.length) * 100}%` : '0%' }}></div>
               </div>
             </div>
           </div>

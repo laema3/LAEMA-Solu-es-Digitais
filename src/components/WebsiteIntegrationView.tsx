@@ -14,7 +14,7 @@ export const WebsiteIntegrationView: React.FC<WebsiteIntegrationViewProps> = ({
   const [copied, setCopied] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  const widgetCode = `<script src="https://omnidesk.app/widget.js" data-token="ambiental-pragas-live-9921" async></script>`;
+  const widgetCode = `<script src="https://laemasolucoes.com.br/widget.js" data-token="widget-live-token" async></script>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(widgetCode);
@@ -35,8 +35,8 @@ export const WebsiteIntegrationView: React.FC<WebsiteIntegrationViewProps> = ({
       urgencyScore: 4,
       unreadCount: 1,
       lastMessageTime: 'Agora mesmo',
-      assignedAgent: 'Carlos Mendes',
-      tags: ['Agendamento Site', 'Dedetização'],
+      assignedAgent: 'Atendente',
+      tags: ['Agendamento Site', 'Serviço'],
       company: 'Residência',
       messages: [
         {
@@ -74,7 +74,7 @@ export const WebsiteIntegrationView: React.FC<WebsiteIntegrationViewProps> = ({
     <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto">
       <div>
         <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Integração com o Website</h2>
-        <p className="text-slate-500 text-sm mt-1">Conecte o widget de atendimento e agendamento ao site <a href="https://ambientalcontroledepragas.com.br" target="_blank" rel="noreferrer" className="text-slate-900 underline font-semibold">ambientalcontroledepragas.com.br</a>.</p>
+        <p className="text-slate-500 text-sm mt-1">Conecte o widget de atendimento e agendamento ao site oficial da sua empresa.</p>
       </div>
 
       {successToast && (
@@ -151,11 +151,11 @@ export const WebsiteIntegrationView: React.FC<WebsiteIntegrationViewProps> = ({
           <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
-                AP
+                SE
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">Ambiental Controle de Pragas</p>
-                <p className="text-[10px] text-emerald-600 font-medium">● Agende sua visita online</p>
+                <p className="text-xs font-bold text-slate-900">Sua Empresa</p>
+                <p className="text-[10px] text-emerald-600 font-medium">● Agende seu atendimento online</p>
               </div>
             </div>
             <span className="px-3 py-1 bg-slate-900 text-white font-bold text-xs rounded-full">

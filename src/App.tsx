@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DashboardView } from './components/DashboardView';
@@ -20,26 +20,95 @@ import { INITIAL_CONVERSATIONS, INITIAL_KNOWLEDGE_BASE, INITIAL_VISITS, INITIAL_
 import { Conversation, ChannelType, TicketStatus, Visit, SocialPost, Tenant } from './types';
 
 export default function App() {
-  const [tenants, setTenants] = useState<Tenant[]>(INITIAL_TENANTS);
-  const [activeTenantId, setActiveTenantId] = useState<string>('tenant-1');
+  const [tenants, setTenants] = useState<Tenant[]>(() => {
+    try {
+      const saved = localStorage.getItem('laema_tenants');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Exclude test tenants so system is 100% clean
+        const clean = parsed.filter(
+          (t: any) =>
+            t.id !== 'tenant-1' &&
+            t.id !== 'tenant-2' &&
+            t.id !== 'tenant-3' &&
+            t.slug !== 'ambiental-pragas' &&
+            t.slug !== 'sos-pragas' &&
+            t.slug !== 'cleanclean'
+        );
+        return clean;
+      }
+    } catch (e) {
+      console.warn('Error reading tenants from localStorage', e);
+    }
+    return INITIAL_TENANTS;
+  });
+
+  const [activeTenantId, setActiveTenantId] = useState<string>('');
   const [currentView, setCurrentView] = useState<'inbox' | 'dashboard' | 'analytics' | 'kb' | 'customers' | 'settings' | 'visits' | 'chatbot' | 'website' | 'social' | 'master' | 'kanban' | 'flow'>('master');
+  const [isClientMode, setIsClientMode] = useState<boolean>(false);
+
+  // Sync tenants to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('laema_tenants', JSON.stringify(tenants));
+    } catch (e) {
+      console.warn('Error saving tenants to localStorage', e);
+    }
+  }, [tenants]);
+
+  // URL-based routing: detect if user or client opened /app/:slug or ?slug=:slug
+  useEffect(() => {
+    const handleUrlRoute = () => {
+      const path = window.location.pathname;
+      const searchParams = new URLSearchParams(window.location.search);
+      const querySlug = searchParams.get('empresa') || searchParams.get('slug');
+
+      let targetSlug = querySlug;
+      if (!targetSlug && path.startsWith('/app/')) {
+        targetSlug = path.replace('/app/', '').split('/')[0].split('?')[0];
+      }
+
+      if (targetSlug) {
+        const found = tenants.find((t) => t.slug === targetSlug || t.id === targetSlug);
+        if (found) {
+          setActiveTenantId(found.id);
+          setCurrentView('dashboard');
+          setIsClientMode(true);
+        }
+      }
+    };
+
+    handleUrlRoute();
+    window.addEventListener('popstate', handleUrlRoute);
+    return () => window.removeEventListener('popstate', handleUrlRoute);
+  }, [tenants]);
   
   const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
   const [visits, setVisits] = useState<Visit[]>(INITIAL_VISITS);
   const [socialPosts, setSocialPosts] = useState<SocialPost[]>(INITIAL_SOCIAL_POSTS);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(INITIAL_CONVERSATIONS[0]?.id || null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [selectedChannelFilter, setSelectedChannelFilter] = useState<'all' | ChannelType>('all');
   const [isSimulateModalOpen, setIsSimulateModalOpen] = useState(false);
   const [defaultSimulateChannel, setDefaultSimulateChannel] = useState<ChannelType>('whatsapp');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const activeTenant = tenants.find((t) => t.id === activeTenantId) || null;
+  const activeTenant = tenants.find((t) => t.id === activeTenantId) || tenants[0] || null;
   const unreadTotal = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
-  const activeConversation = conversations.find((c) => c.id === activeConversationId) || null;
+  const activeConversation = conversations.find((c) => c.id === activeConversationId) || (conversations.length > 0 ? conversations[0] : null);
 
   const handleSelectTenantWorkspace = (tenantId: string) => {
+    const tenant = tenants.find((t) => t.id === tenantId);
     setActiveTenantId(tenantId);
     setCurrentView('dashboard');
+    if (tenant) {
+      window.history.pushState(null, '', `/app/${tenant.slug}`);
+    }
+  };
+
+  const handleReturnToMaster = () => {
+    setCurrentView('master');
+    setIsClientMode(false);
+    window.history.pushState(null, '', '/');
   };
 
   const handleAddTenant = (newTenant: Tenant) => {
@@ -68,7 +137,7 @@ export default function App() {
     const newMessage = {
       id: `m-${Date.now()}`,
       sender: 'agent' as const,
-      senderName: 'Carlos Mendes',
+      senderName: activeTenant?.ownerName || 'Atendente',
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       channel: activeConversation ? activeConversation.channel : ('whatsapp' as ChannelType),
@@ -167,7 +236,8 @@ export default function App() {
         setCurrentView={setCurrentView}
         unreadTotal={unreadTotal}
         activeTenant={activeTenant}
-        onReturnToMaster={() => setCurrentView('master')}
+        onReturnToMaster={handleReturnToMaster}
+        isClientMode={isClientMode}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -198,6 +268,7 @@ export default function App() {
                   visits={visits}
                   onSelectConversation={handleSelectConversation}
                   onNavigate={setCurrentView}
+                  activeTenant={activeTenant}
                 />
               )}
 
@@ -264,7 +335,7 @@ export default function App() {
                 />
               )}
 
-              {currentView === 'analytics' && <AnalyticsView />}
+              {currentView === 'analytics' && <AnalyticsView conversations={conversations} />}
 
               {currentView === 'kb' && <KnowledgeBaseView knowledgeBase={INITIAL_KNOWLEDGE_BASE} />}
 

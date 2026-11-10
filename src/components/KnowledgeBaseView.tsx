@@ -93,26 +93,38 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({ knowledgeB
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredItems.map((item) => (
-            <div key={item.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3 hover:border-slate-300 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-800 font-semibold">
-                  {item.category}
-                </span>
-              </div>
-              <h4 className="font-bold text-slate-900 text-base">{item.title}</h4>
-              <p className="text-sm text-slate-600 leading-relaxed">{item.content}</p>
-              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
-                {item.tags.map((tag, idx) => (
-                  <span key={idx} className="inline-flex items-center gap-1 text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
-                    <Tag className="w-3 h-3 text-slate-400" /> {tag}
-                  </span>
-                ))}
-              </div>
+        {filteredItems.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 border border-dashed border-slate-300 text-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto">
+              <BookOpen className="w-8 h-8" />
             </div>
-          ))}
-        </div>
+            <h3 className="font-bold text-slate-900 text-lg">Nenhum artigo cadastrado na base</h3>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              Cadastre orientações técnicas, FAQs e respostas frequentes para alimentar o assistente de IA.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredItems.map((item) => (
+              <div key={item.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3 hover:border-slate-300 transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-800 font-semibold">
+                    {item.category}
+                  </span>
+                </div>
+                <h4 className="font-bold text-slate-900 text-base">{item.title}</h4>
+                <p className="text-sm text-slate-600 leading-relaxed">{item.content}</p>
+                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
+                  {item.tags.map((tag, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-1 text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
+                      <Tag className="w-3 h-3 text-slate-400" /> {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,10 +3,10 @@ import { GitBranch, Plus, CheckCircle2, Bot, MessageSquare, Calendar, ArrowRight
 
 export const FlowBuilderView: React.FC = () => {
   const [steps, setSteps] = useState([
-    { id: 1, title: 'Início do Atendimento (Boas-vindas)', trigger: 'Mensagem recebida no WhatsApp / Site', action: 'Enviar saudação automática + Menu de Pragas' },
-    { id: 2, title: 'Identificação da Praga', trigger: 'Cliente escolhe 1 (Baratas/Formigas) ou 2 (Cupins/Ratos)', action: 'Enviar orientações e perguntar endereço' },
-    { id: 3, title: 'Agendamento Automático', trigger: 'Cliente informa endereço e melhor data', action: 'Cadastrar visita na agenda e notificar técnico' },
-    { id: 4, title: 'Transbordo para Humano', trigger: 'Cliente digita "Falar com atendente"', action: 'Atribuir para Carlos Mendes na Caixa de Entrada' },
+    { id: 1, title: 'Início do Atendimento (Boas-vindas)', trigger: 'Mensagem recebida no WhatsApp / Site', action: 'Enviar saudação automática + Menu inicial' },
+    { id: 2, title: 'Identificação da Necessidade', trigger: 'Cliente escolhe opção ou descreve necessidade', action: 'Enviar orientações e coletar dados' },
+    { id: 3, title: 'Agendamento / Solicitação', trigger: 'Cliente informa dados e preferências', action: 'Registrar visita/chamado e notificar equipe' },
+    { id: 4, title: 'Transbordo para Humano', trigger: 'Cliente digita "Falar com atendente"', action: 'Atribuir para atendente na Caixa de Entrada' },
   ]);
 
   const [toast, setToast] = useState<string | null>(null);

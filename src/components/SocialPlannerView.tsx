@@ -66,7 +66,7 @@ export const SocialPlannerView: React.FC<SocialPlannerViewProps> = ({ posts, onA
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Planejador & Agendador de Redes Sociais</h2>
-          <p className="text-slate-500 text-sm mt-1">Programe postagens automáticas diárias para o Instagram e Facebook da Ambiental Controle de Pragas.</p>
+          <p className="text-slate-500 text-sm mt-1">Programe postagens automáticas diárias para o Instagram e Facebook.</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -96,48 +96,69 @@ export const SocialPlannerView: React.FC<SocialPlannerViewProps> = ({ posts, onA
       </div>
 
       {/* Posts grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((post) => (
-          <div key={post.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between hover:border-slate-300 transition-all">
-            <div>
-              <div className="relative h-48 bg-slate-100">
-                <img src={post.imageUrl} alt="Social post" className="w-full h-full object-cover" />
-                <div className="absolute top-3 left-3 flex gap-1.5">
-                  {post.platforms.map((p, idx) => (
-                    <span key={idx} className="bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
-                      {p}
-                    </span>
-                  ))}
-                </div>
-                <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                  post.status === 'Publicado' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'
-                }`}>
-                  {post.status}
-                </span>
-              </div>
-
-              <div className="p-5 space-y-3">
-                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                  <CalendarIcon className="w-3.5 h-3.5 text-purple-600" />
-                  <span>{post.scheduledDate} às {post.scheduledTime}</span>
-                </div>
-                <p className="text-xs text-slate-700 line-clamp-3 leading-relaxed">{post.caption}</p>
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <span className="text-[11px] text-slate-400">Publicação Automática</span>
-              <button
-                onClick={() => onDeletePost(post.id)}
-                className="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg border border-slate-200 bg-white transition-colors"
-                title="Excluir postagem"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
+      {posts.length === 0 ? (
+        <div className="bg-white rounded-2xl p-12 border border-dashed border-slate-300 text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mx-auto">
+            <Share2 className="w-8 h-8" />
           </div>
-        ))}
-      </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-slate-900 text-lg">Nenhuma postagem programada</h3>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              Não há postagens agendadas no momento. Clique no botão abaixo para agendar sua primeira postagem com IA.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Agendar Primeira Postagem</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between hover:border-slate-300 transition-all">
+              <div>
+                <div className="relative h-48 bg-slate-100">
+                  <img src={post.imageUrl} alt="Social post" className="w-full h-full object-cover" />
+                  <div className="absolute top-3 left-3 flex gap-1.5">
+                    {post.platforms.map((p, idx) => (
+                      <span key={idx} className="bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                  <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                    post.status === 'Publicado' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'
+                  }`}>
+                    {post.status}
+                  </span>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                    <CalendarIcon className="w-3.5 h-3.5 text-purple-600" />
+                    <span>{post.scheduledDate} às {post.scheduledTime}</span>
+                  </div>
+                  <p className="text-xs text-slate-700 line-clamp-3 leading-relaxed">{post.caption}</p>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <span className="text-[11px] text-slate-400">Publicação Automática</span>
+                <button
+                  onClick={() => onDeletePost(post.id)}
+                  className="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg border border-slate-200 bg-white transition-colors"
+                  title="Excluir postagem"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Modal to create post */}
       {isModalOpen && (
