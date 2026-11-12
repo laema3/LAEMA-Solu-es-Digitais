@@ -84,15 +84,16 @@ export default function App() {
         console.warn('Error clearing master auth', e);
       }
     } else {
+      // Logout from client workspace
       setCurrentUser(null);
-      setCurrentView('master');
-      setIsClientMode(false);
-      window.history.pushState(null, '', '/');
       try {
         localStorage.removeItem('laema_client_auth');
       } catch (e) {
         console.warn('Error clearing client auth', e);
       }
+      // We do NOT reset currentView or isClientMode here.
+      // This ensures the render guard triggers and shows the LoginView 
+      // for the current activeTenant at the same URL.
     }
   };
 
