@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Plus, Edit2, Trash2, ExternalLink, Globe, Smartphone, Building, Users, AlertTriangle, CheckCircle2, Sparkles, Copy, Server, Key, LogOut } from 'lucide-react';
+import { ShieldCheck, Plus, Edit2, Trash2, ExternalLink, Globe, Smartphone, Building, Users, AlertTriangle, CheckCircle2, Sparkles, Copy, Server, Key, LogOut, RefreshCw } from 'lucide-react';
 import { Tenant } from '../types';
 
 interface MasterAdminViewProps {
@@ -48,6 +48,51 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [toast, setToast] = useState<string | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleTestConnection = async () => {
+    if (!config.evolutionApiUrl) {
+      setToast('Insira a URL da VPS antes de testar.');
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    setIsTesting(true);
+    setTestResult(null);
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(`${config.evolutionApiUrl}/instance/fetchInstances`, {
+        method: 'GET',
+        headers: {
+          'apikey': config.globalApiToken,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        setTestResult({ success: true, message: 'Conectado com sucesso! A Evolution API respondeu corretamente.' });
+      } else {
+        setTestResult({ 
+          success: false, 
+          message: `Erro na API (${response.status}). Verifique se a URL e o Token Global estão corretos.` 
+        });
+      }
+    } catch (error: any) {
+      setTestResult({ 
+        success: false, 
+        message: 'Falha na conexão. Verifique se a URL está correta e se o CORS está liberado na VPS.' 
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const handleSaveConfig = (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,12 +362,32 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
                 <strong>Atenção:</strong> Ao salvar esta configuração, todos os workspaces dos clientes passarão a utilizar automaticamente este endereço para gerar os QR Codes e sincronizar mensagens.
               </div>
 
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold shadow-sm transition-colors"
-              >
-                Salvar Configurações Globais
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold shadow-sm transition-colors"
+                >
+                  Salvar Configurações Globais
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTestConnection}
+                  disabled={isTesting}
+                  className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold border border-slate-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  {isTesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                  <span>{isTesting ? 'Testando...' : 'Testar Conexão'}</span>
+                </button>
+              </div>
+
+              {testResult && (
+                <div className={`p-4 rounded-xl text-xs font-medium border animate-in fade-in zoom-in-95 ${testResult.success ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'}`}>
+                  <div className="flex gap-2">
+                    {testResult.success ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertTriangle className="w-4 h-4 shrink-0" />}
+                    <span>{testResult.message}</span>
+                  </div>
+                </div>
+              )}
             </form>
           </div>
         </div>
