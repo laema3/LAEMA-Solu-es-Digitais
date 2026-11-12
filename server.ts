@@ -25,6 +25,39 @@ async function startServer() {
 
   const PORT = Number(process.env.PORT || 3000);
 
+  // Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", time: new Date().toISOString() });
+  });
+
+  // VPS Proxy Route to bypass Mixed Content (HTTP on HTTPS) and CORS issues
+  app.post("/api/proxy/evolution", async (req, res) => {
+    console.log("Proxy request received:", req.body.targetUrl);
+    try {
+      const { targetUrl, method, apiKey, body } = req.body;
+
+      if (!targetUrl) {
+        return res.status(400).json({ error: "URL de destino é obrigatória." });
+      }
+
+      const response = await fetch(targetUrl, {
+        method: method || "GET",
+        headers: {
+          "apikey": apiKey || "",
+          "Content-Type": "application/json"
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      const data = await response.json().catch(() => ({}));
+      console.log(`Proxy target responded with status ${response.status}`);
+      res.status(response.status).json(data);
+    } catch (error: any) {
+      console.error("Proxy error details:", error);
+      res.status(500).json({ error: "Erro ao conectar com a VPS via Proxy.", details: error.message });
+    }
+  });
+
   // API Routes for Gemini AI features in OmniDesk CRM
   app.post("/api/gemini/suggest-reply", async (req, res) => {
     try {
@@ -188,32 +221,6 @@ Pergunta do Atendente: "${query}"`;
     } catch (error: any) {
       console.error("Error in kb-search:", error);
       res.status(500).json({ error: error.message || "Erro ao buscar na base de conhecimento." });
-    }
-  });
-
-  // VPS Proxy Route to bypass Mixed Content (HTTP on HTTPS) and CORS issues
-  app.post("/api/proxy/evolution", async (req, res) => {
-    try {
-      const { targetUrl, method, apiKey, body } = req.body;
-
-      if (!targetUrl) {
-        return res.status(400).json({ error: "URL de destino é obrigatória." });
-      }
-
-      const response = await fetch(targetUrl, {
-        method: method || "GET",
-        headers: {
-          "apikey": apiKey || "",
-          "Content-Type": "application/json"
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-
-      const data = await response.json().catch(() => ({}));
-      res.status(response.status).json(data);
-    } catch (error: any) {
-      console.error("Proxy error:", error);
-      res.status(500).json({ error: "Erro ao conectar com a VPS via Proxy." });
     }
   });
 
