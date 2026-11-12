@@ -123,7 +123,15 @@ export default function App() {
           setActiveTenantId(found.id);
           setCurrentView('dashboard');
           setIsClientMode(true);
+        } else {
+          // If a slug was provided but not found, we should NOT fall back to master login silently
+          // For now, we'll keep master as fallback but ensure activeTenant is null
+          setActiveTenantId('__NOT_FOUND__');
+          setIsClientMode(true);
         }
+      } else if (path === '/' || path === '') {
+        setCurrentView('master');
+        setIsClientMode(false);
       }
     };
 
@@ -132,16 +140,53 @@ export default function App() {
     return () => window.removeEventListener('popstate', handleUrlRoute);
   }, [tenants]);
   
-  const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
-  const [visits, setVisits] = useState<Visit[]>(INITIAL_VISITS);
-  const [socialPosts, setSocialPosts] = useState<SocialPost[]>(INITIAL_SOCIAL_POSTS);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
+  const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
+
+  // Load/Save tenant data
+  useEffect(() => {
+    if (activeTenantId && activeTenantId !== '__NOT_FOUND__') {
+      const convs = localStorage.getItem(`laema_convs_${activeTenantId}`);
+      const vsts = localStorage.getItem(`laema_visits_${activeTenantId}`);
+      const posts = localStorage.getItem(`laema_posts_${activeTenantId}`);
+      
+      setConversations(convs ? JSON.parse(convs) : []);
+      setVisits(vsts ? JSON.parse(vsts) : []);
+      setSocialPosts(posts ? JSON.parse(posts) : []);
+    } else if (currentView === 'master') {
+       // In master view, we could potentially see all, but for now we reset
+       setConversations([]);
+       setVisits([]);
+       setSocialPosts([]);
+    }
+  }, [activeTenantId, currentView]);
+
+  useEffect(() => {
+    if (activeTenantId && activeTenantId !== '__NOT_FOUND__') {
+      localStorage.setItem(`laema_convs_${activeTenantId}`, JSON.stringify(conversations));
+    }
+  }, [conversations, activeTenantId]);
+
+  useEffect(() => {
+    if (activeTenantId && activeTenantId !== '__NOT_FOUND__') {
+      localStorage.setItem(`laema_visits_${activeTenantId}`, JSON.stringify(visits));
+    }
+  }, [visits, activeTenantId]);
+
+  useEffect(() => {
+    if (activeTenantId && activeTenantId !== '__NOT_FOUND__') {
+      localStorage.setItem(`laema_posts_${activeTenantId}`, JSON.stringify(socialPosts));
+    }
+  }, [socialPosts, activeTenantId]);
+
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [selectedChannelFilter, setSelectedChannelFilter] = useState<'all' | ChannelType>('all');
   const [isSimulateModalOpen, setIsSimulateModalOpen] = useState(false);
   const [defaultSimulateChannel, setDefaultSimulateChannel] = useState<ChannelType>('whatsapp');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const activeTenant = tenants.find((t) => t.id === activeTenantId) || tenants[0] || null;
+  const activeTenant = tenants.find((t) => t.id === activeTenantId || (activeTenantId && t.slug === activeTenantId)) || null;
   const unreadTotal = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
   const activeConversation = conversations.find((c) => c.id === activeConversationId) || (conversations.length > 0 ? conversations[0] : null);
 

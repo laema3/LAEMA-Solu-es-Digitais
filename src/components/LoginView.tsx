@@ -198,22 +198,43 @@ export const LoginView: React.FC<LoginViewProps> = ({
           </div>
 
           {/* Quick preset chips for convenience */}
-          <div className="pt-1">
-            <p className="text-[11px] font-semibold text-slate-500 mb-2">Atendentes Cadastrados para este Workspace:</p>
-            <div className="flex flex-wrap gap-2">
-              {presetUsers.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => handleQuickLogin(preset)}
-                  className="py-1.5 px-3 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors flex items-center gap-1.5"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span>{preset.name}</span>
-                </button>
-              ))}
+          {presetUsers.length > 0 && activeTenant && (
+            <div className="pt-1">
+              <p className="text-[11px] font-semibold text-slate-500 mb-2">Atendentes Cadastrados para este Workspace:</p>
+              <div className="flex flex-wrap gap-2">
+                {presetUsers.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => handleQuickLogin(preset)}
+                    className="py-1.5 px-3 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors flex items-center gap-1.5"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>{preset.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {presetUsers.length > 0 && !activeTenant && (
+            <div className="pt-1">
+              <p className="text-[11px] font-semibold text-slate-500 mb-2">Acesso Administrativo:</p>
+              <div className="flex flex-wrap gap-2">
+                {presetUsers.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => handleQuickLogin(preset)}
+                    className="py-1.5 px-3 bg-purple-50 hover:bg-purple-100 hover:border-purple-200 border border-purple-200 rounded-lg text-[10px] font-bold text-purple-700 uppercase tracking-tight transition-colors flex items-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-3 h-3 text-purple-600" />
+                    <span>{preset.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"
