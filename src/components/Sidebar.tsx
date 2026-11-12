@@ -124,18 +124,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
             <img
-              src={currentUser?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"}
-              alt={currentUser?.name || "Administrador Laema"}
+              src={!isClientMode 
+                ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" 
+                : (currentUser?.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150")}
+              alt={!isClientMode ? "Administrador Master" : (currentUser?.name || "Atendente")}
               className="w-9 h-9 rounded-full object-cover border border-slate-200 shadow-sm"
             />
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+            <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white rounded-full ${!isClientMode ? 'bg-purple-500' : 'bg-emerald-500'}`}></span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-slate-900 truncate">
-              {currentUser?.name || (isClientMode ? 'Atendente' : 'Laema Soluções')}
+              {!isClientMode ? 'Administrador Master' : (currentUser?.name || 'Atendente')}
             </p>
             <p className="text-[11px] text-slate-500 truncate">
-              {currentUser?.role || (isClientMode ? 'Operador' : 'Super Admin SaaS')}
+              {!isClientMode ? 'Super Admin SaaS' : (currentUser?.role || 'Operador')}
             </p>
           </div>
         </div>

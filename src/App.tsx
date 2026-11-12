@@ -204,6 +204,10 @@ export default function App() {
   const handleReturnToMaster = () => {
     setCurrentView('master');
     setIsClientMode(false);
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('laema_client_auth');
+    } catch (e) {}
     window.history.pushState(null, '', '/');
   };
 
@@ -386,6 +390,7 @@ export default function App() {
               onUpdateTenant={handleUpdateTenant}
               onDeleteTenant={handleDeleteTenant}
               onSelectTenantWorkspace={handleSelectTenantWorkspace}
+              onLogout={handleLogout}
             />
           ) : (
             <>
@@ -468,7 +473,7 @@ export default function App() {
 
               {currentView === 'customers' && <CustomersView conversations={conversations} />}
 
-              {currentView === 'settings' && <SettingsView activeTenant={activeTenant} />}
+              {currentView === 'settings' && <SettingsView activeTenant={activeTenant} isMasterAdmin={isMasterLoggedIn} />}
             </>
           )}
         </main>

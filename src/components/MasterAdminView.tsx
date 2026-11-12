@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShieldCheck, Plus, Edit2, Trash2, ExternalLink, Globe, Smartphone, Building, Users, AlertTriangle, CheckCircle2, Sparkles, Copy } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShieldCheck, Plus, Edit2, Trash2, ExternalLink, Globe, Smartphone, Building, Users, AlertTriangle, CheckCircle2, Sparkles, Copy, Server, Key, LogOut } from 'lucide-react';
 import { Tenant } from '../types';
 
 interface MasterAdminViewProps {
@@ -8,6 +8,12 @@ interface MasterAdminViewProps {
   onUpdateTenant: (tenant: Tenant) => void;
   onDeleteTenant: (id: string) => void;
   onSelectTenantWorkspace: (tenantId: string) => void;
+  onLogout?: () => void;
+}
+
+interface GlobalConfig {
+  evolutionApiUrl: string;
+  globalApiToken: string;
 }
 
 export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
@@ -16,7 +22,20 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
   onUpdateTenant,
   onDeleteTenant,
   onSelectTenantWorkspace,
+  onLogout
 }) => {
+  const [activeTab, setActiveTab] = useState<'tenants' | 'settings'>('tenants');
+
+  // Global Config state
+  const [config, setConfig] = useState<GlobalConfig>(() => {
+    try {
+      const saved = localStorage.getItem('laema_global_config');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { evolutionApiUrl: '', globalApiToken: '' };
+  });
+
+  // Tenant Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [name, setName] = useState('');
@@ -29,6 +48,13 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [toast, setToast] = useState<string | null>(null);
+
+  const handleSaveConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem('laema_global_config', JSON.stringify(config));
+    setToast('Configurações globais da VPS salvas com sucesso!');
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleOpenAdd = () => {
     setEditingTenant(null);
@@ -113,268 +139,251 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
             <span>Laema Soluções Digitais — Painel Master SaaS</span>
           </div>
           <h2 className="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
-            Painel de Administração Master
+            Gerenciamento Global do Sistema
           </h2>
           <p className="text-slate-600 text-sm leading-relaxed max-w-2xl">
-            Gerencie todas as empresas clientes e supervise as operações multi-tenant do seu SaaS. Cada empresa gerencia seus próprios operadores diretamente no painel interno dela.
+            Supervisione todas as empresas clientes e configure a conexão central com a sua VPS (Evolution API). 
           </p>
         </div>
-        <button
-          onClick={handleOpenAdd}
-          className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors flex items-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Cadastrar Nova Empresa</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2.5 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 hover:bg-rose-50 transition-colors"
+              title="Sair do Painel Master"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          )}
+          <button
+            onClick={handleOpenAdd}
+            className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors flex items-center gap-2 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Cadastrar Nova Empresa</span>
+          </button>
+        </div>
       </div>
 
       {toast && (
-        <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-md text-sm font-medium flex items-center gap-2">
+        <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-md text-sm font-medium flex items-center gap-2 animate-in fade-in">
           <CheckCircle2 className="w-5 h-5" /> {toast}
         </div>
       )}
 
-      {/* Tenants Cards */}
-      <div className="space-y-4">
-        <h3 className="text-base font-bold text-slate-900">Empresas Clientes Cadastradas ({tenants.length})</h3>
+      {/* Tabs */}
+      <div className="flex border-b border-slate-200 gap-6">
+        <button
+          onClick={() => setActiveTab('tenants')}
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'tenants' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+        >
+          <Building className="w-4 h-4" />
+          <span>Empresas Clientes ({tenants.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'settings' ? 'border-sky-500 text-sky-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+        >
+          <Server className="w-4 h-4" />
+          <span>Configuração da VPS (Evolution API)</span>
+        </button>
+      </div>
 
-        {tenants.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 border border-dashed border-slate-300 text-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
-              <Plus className="w-8 h-8" />
-            </div>
-            <div className="space-y-1">
+      {/* TAB 1: TENANTS LIST */}
+      {activeTab === 'tenants' && (
+        <div className="space-y-4">
+          {tenants.length === 0 ? (
+            <div className="bg-white rounded-2xl p-12 border border-dashed border-slate-300 text-center space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
+                <Plus className="w-8 h-8" />
+              </div>
               <h3 className="font-bold text-slate-900 text-lg">Nenhuma empresa cliente cadastrada</h3>
-              <p className="text-slate-500 text-sm max-w-md mx-auto">
-                O sistema está zerado e pronto para receber dados reais. Cadastre sua primeira empresa para gerar o link exclusivo.
-              </p>
+              <button
+                onClick={handleOpenAdd}
+                className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors"
+              >
+                Cadastrar Primeira Empresa
+              </button>
             </div>
-            <button
-              onClick={handleOpenAdd}
-              className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors inline-flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Cadastrar Primeira Empresa</span>
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tenants.map((tenant) => (
-              <div key={tenant.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:border-slate-300 transition-all flex flex-col justify-between">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase ${
-                      tenant.status === 'Ativo' ? 'bg-emerald-100 text-emerald-800' :
-                      tenant.status === 'Teste' ? 'bg-purple-100 text-purple-800' : 'bg-rose-100 text-rose-800'
-                    }`}>
-                      {tenant.status}
-                    </span>
-                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
-                      Plano {tenant.plan}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base">{tenant.name}</h3>
-                    <p className="text-xs font-medium text-slate-600 mt-0.5">{tenant.segment}</p>
-                  </div>
-
-                  <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                    <p className="flex items-center gap-2 truncate">
-                      <Users className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span>Resp: <strong>{tenant.ownerName}</strong></span>
-                    </p>
-                    <p className="flex items-center gap-2 truncate">
-                      <Smartphone className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span>WhatsApp: {tenant.whatsappNumber}</span>
-                    </p>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-slate-900 font-mono text-[11px] truncate">
-                        {(typeof window !== 'undefined' ? window.location.host : 'laemasolucoes.com.br')}/app/{tenant.slug}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {tenants.map((tenant) => (
+                <div key={tenant.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:border-slate-300 transition-all flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase ${
+                        tenant.status === 'Ativo' ? 'bg-emerald-100 text-emerald-800' :
+                        tenant.status === 'Teste' ? 'bg-purple-100 text-purple-800' : 'bg-rose-100 text-rose-800'
+                      }`}>
+                        {tenant.status}
                       </span>
-                      <button
-                        onClick={() => handleCopyClientLink(tenant.slug)}
-                        className="p-1 text-slate-500 hover:text-slate-900 rounded border border-slate-200 bg-white"
-                        title="Copiar link de acesso do cliente"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
+                      <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
+                        Plano {tenant.plan}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base">{tenant.name}</h3>
+                      <p className="text-xs font-medium text-slate-600 mt-0.5">{tenant.segment}</p>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
+                      <p className="flex items-center gap-2 truncate">
+                        <Users className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>Resp: <strong>{tenant.ownerName}</strong></span>
+                      </p>
+                      <p className="flex items-center gap-2 truncate">
+                        <Smartphone className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>WhatsApp: {tenant.whatsappNumber}</span>
+                      </p>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-slate-900 font-mono text-[11px] truncate">
+                          /app/{tenant.slug}
+                        </span>
+                        <button
+                          onClick={() => handleCopyClientLink(tenant.slug)}
+                          className="p-1 text-slate-500 hover:text-slate-900 rounded border border-slate-200 bg-white"
+                          title="Copiar link do cliente"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => onSelectTenantWorkspace(tenant.id)}
+                      className="flex-1 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold transition-colors shadow-sm"
+                    >
+                      Acessar Workspace
+                    </button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => handleOpenEdit(tenant)} className="p-2 text-slate-600 hover:text-slate-900 rounded-lg border border-slate-200 bg-white">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => setDeleteConfirmId(tenant.id)} className="p-2 text-slate-600 hover:text-rose-600 rounded-lg border border-slate-200 bg-white">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => onSelectTenantWorkspace(tenant.id)}
-                    className="flex-1 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold transition-colors text-center shadow-sm"
-                  >
-                    Acessar Workspace
-                  </button>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleOpenEdit(tenant)}
-                      className="p-2 text-slate-600 hover:text-slate-900 rounded-lg border border-slate-200 bg-white"
-                      title="Editar Empresa"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirmId(tenant.id)}
-                      className="p-2 text-slate-600 hover:text-rose-600 rounded-lg border border-slate-200 bg-white"
-                      title="Excluir Empresa"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+      {/* TAB 2: VPS GLOBAL SETTINGS */}
+      {activeTab === 'settings' && (
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm max-w-2xl">
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                <Server className="w-6 h-6" />
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Add / Edit Tenant Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-slate-900">
-              {editingTenant ? 'Editar Empresa Cliente' : 'Cadastrar Nova Empresa Cliente'}
-            </h3>
-            <form onSubmit={handleSaveTenant} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Nome da Empresa / Cliente *</label>
+                <h3 className="font-bold text-slate-900">Configuração Central da VPS</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Defina aqui a URL da sua Evolution API que atenderá todos os clientes.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveConfig} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">URL da Evolution API (VPS)</label>
                 <input
-                  type="text"
+                  type="url"
                   required
-                  placeholder="Ex: Ambiental Controle de Pragas"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                  placeholder="https://sua-vps-whatsapp.com.br"
+                  value={config.evolutionApiUrl}
+                  onChange={(e) => setConfig({ ...config, evolutionApiUrl: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Segmento</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Controle de Pragas"
-                    value={segment}
-                    onChange={(e) => setSegment(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Responsável</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Carlos Mendes"
-                    value={ownerName}
-                    onChange={(e) => setOwnerName(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">Global API Token (Segurança)</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Seu Token Global da Evolution API"
+                  value={config.globalApiToken}
+                  onChange={(e) => setConfig({ ...config, globalApiToken: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">WhatsApp de Conexão *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="+55 11 99999-9999"
-                    value={whatsappNumber}
-                    onChange={(e) => setWhatsappNumber(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Domínio / Link Personalizado</label>
-                  <input
-                    type="text"
-                    placeholder="ambientalpragas.com.br"
-                    value={customDomain}
-                    onChange={(e) => setCustomDomain(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  />
-                </div>
+              <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-900 leading-relaxed">
+                <strong>Atenção:</strong> Ao salvar esta configuração, todos os workspaces dos clientes passarão a utilizar automaticamente este endereço para gerar os QR Codes e sincronizar mensagens.
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Plano</label>
-                  <select
-                    value={plan}
-                    onChange={(e) => setPlan(e.target.value as any)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  >
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold shadow-sm transition-colors"
+              >
+                Salvar Configurações Globais
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modals (Add/Edit/Delete) */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-slate-900">{editingTenant ? 'Editar Empresa' : 'Cadastrar Nova Empresa'}</h3>
+            <form onSubmit={handleSaveTenant} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">Nome da Empresa *</label>
+                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">WhatsApp Oficial *</label>
+                  <input type="text" required value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">Responsável</label>
+                  <input type="text" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">Plano</label>
+                  <select value={plan} onChange={(e) => setPlan(e.target.value as any)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
                     <option value="Starter">Starter</option>
                     <option value="Pro">Pro</option>
                     <option value="Enterprise">Enterprise</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Status da Conta</label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
-                    className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
-                  >
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">Status</label>
+                  <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
                     <option value="Ativo">Ativo</option>
                     <option value="Teste">Teste</option>
                     <option value="Bloqueado">Bloqueado</option>
                   </select>
                 </div>
               </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 rounded-xl font-medium"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-xl shadow-sm"
-                >
-                  {editingTenant ? 'Salvar Alterações' : 'Criar Empresa no SaaS'}
-                </button>
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs text-slate-600 font-medium">Cancelar</button>
+                <button type="submit" className="px-5 py-2 bg-sky-500 text-white rounded-xl text-xs font-bold">{editingTenant ? 'Salvar' : 'Criar Empresa'}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-slate-900 text-base">Confirmar Exclusão</h3>
-            <p className="text-xs text-slate-500">Tem certeza que deseja remover esta empresa cliente?</p>
-            <div className="flex justify-center gap-3 pt-2">
-              <button
-                onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 rounded-xl font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  onDeleteTenant(deleteConfirmId);
-                  setDeleteConfirmId(null);
-                  setToast('Empresa cliente excluída com sucesso!');
-                  setTimeout(() => setToast(null), 3000);
-                }}
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl shadow-sm"
-              >
-                Sim, Excluir
-              </button>
+            <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto" />
+            <h3 className="font-bold text-slate-900">Excluir Empresa?</h3>
+            <p className="text-xs text-slate-500">Isso removerá todos os dados e acessos desta empresa permanentemente.</p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setDeleteConfirmId(null)} className="px-4 py-2 text-xs font-medium">Cancelar</button>
+              <button onClick={() => { onDeleteTenant(deleteConfirmId); setDeleteConfirmId(null); setToast('Empresa excluída!'); setTimeout(() => setToast(null), 3000); }} className="px-5 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold">Sim, Excluir</button>
             </div>
           </div>
         </div>

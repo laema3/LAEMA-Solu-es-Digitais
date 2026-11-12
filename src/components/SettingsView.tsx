@@ -20,13 +20,15 @@ import {
   Trash2,
   ShieldCheck,
   User,
-  AlertTriangle
+  AlertTriangle,
+  ChevronRight
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Tenant } from '../types';
 
 interface SettingsViewProps {
   activeTenant: Tenant | null;
+  isMasterAdmin?: boolean;
 }
 
 interface OperatorUser {
@@ -37,7 +39,7 @@ interface OperatorUser {
   role: string;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant, isMasterAdmin = false }) => {
   const [activeTab, setActiveTab] = useState<'whatsapp' | 'operators' | 'channels'>('whatsapp');
 
   // WhatsApp state
@@ -48,7 +50,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
     return localStorage.getItem(`laema_wa_number_${activeTenant?.id || 'default'}`) || activeTenant?.whatsappNumber || '+55 (11) 98877-6655';
   });
   const [showQrModal, setShowQrModal] = useState(false);
-  const [modalMode, setModalMode] = useState<'qr' | 'code' | 'vps'>('qr');
+  const [modalMode, setModalMode] = useState<'qr' | 'code'>('qr');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [countdown, setCountdown] = useState(25);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -56,6 +58,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Global VPS config (Master defined)
+  const [globalVpsConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('laema_global_config');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { evolutionApiUrl: '', globalApiToken: '' };
+  });
 
   // Operators state per tenant
   const tenantStorageKey = `laema_tenant_users_${activeTenant?.id || 'default'}`;
@@ -84,7 +95,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
   const [connectedEmail, setConnectedEmail] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Generate QR code
+  // Generate QR code (In a real app, this calls the global VPS URL)
   useEffect(() => {
     if (showQrModal && modalMode === 'qr') {
       const pairingPayload = `2@${Math.random().toString(36).substring(2, 10)},${Math.random().toString(36).substring(2, 15)},${Math.random().toString(36).substring(2, 15)}`;
@@ -176,6 +187,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto overflow-y-auto select-none">
       <div>
@@ -256,7 +273,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
                   className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors flex items-center gap-2"
                 >
                   <QrCode className="w-4 h-4" />
-                  <span>Conectar Celular (QR Code)</span>
+                  <span>Conectar Celular</span>
                 </button>
               )}
             </div>
@@ -265,11 +282,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
           <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
             <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
               <Smartphone className="w-4 h-4 text-sky-600" />
-              <span>Como fazer a leitura do QR Code no seu celular:</span>
+              <span>Instruções de Conexão:</span>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Abra o WhatsApp no celular da empresa, vá em <strong>Configurações</strong> &gt; <strong>Aparelhos conectados</strong> &gt; <strong>Conectar um aparelho</strong> e aponte para o QR Code.
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs">
+                <span className="font-bold text-sky-600">1.</span> Abra o WhatsApp no celular da empresa.
+              </div>
+              <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs">
+                <span className="font-bold text-sky-600">2.</span> Vá em Menu ou Configurações &gt; Aparelhos Conectados.
+              </div>
+              <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs">
+                <span className="font-bold text-sky-600">3.</span> Clique em Conectar Aparelho e aponte para o QR Code.
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -279,7 +304,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider flex justify-between items-center">
-              <span>Atendentes & Operadores deste Workspace ({operators.length})</span>
+              <span>Atendentes deste Workspace ({operators.length})</span>
               <button
                 onClick={() => {
                   setEditingOperator(null);
@@ -304,7 +329,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-900 text-sm">{op.name}</h4>
-                      <p className="text-xs text-slate-500 font-mono">Usuário: {op.username} • Cargo: {op.role}</p>
+                      <p className="text-xs text-slate-500 font-mono">Login: {op.username} • Cargo: {op.role}</p>
                     </div>
                   </div>
 
@@ -324,12 +349,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
                         }}
                         className="px-3 py-1.5 text-slate-700 hover:text-slate-900 rounded-lg border border-slate-200 bg-white text-xs font-medium"
                       >
-                        Editar / Senha
+                        Editar
                       </button>
                       <button
                         onClick={() => setOpDeleteConfirmId(op.id)}
                         className="p-2 text-slate-400 hover:text-rose-600 rounded-lg border border-slate-200 bg-white"
-                        title="Excluir Atendente"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -397,32 +421,121 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
         </div>
       )}
 
-      {/* QR Code Modal */}
+      {/* QR Code Modal (Simplified for Client - No technical VPS fields) */}
       {showQrModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-center">
-            <h3 className="text-base font-bold text-slate-900">Escaneie o QR Code</h3>
-            <div className="p-4 bg-white rounded-2xl inline-block border-2 border-slate-200 shadow-inner">
-              {qrCodeDataUrl ? (
-                <img src={qrCodeDataUrl} alt="WhatsApp QR Code" className="w-56 h-56 mx-auto rounded-lg" />
-              ) : (
-                <div className="w-56 h-56 flex items-center justify-center text-xs text-slate-400">Gerando QR Code...</div>
-              )}
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl space-y-6 text-center border border-slate-200">
+            <div className="space-y-1">
+              <h3 className="text-xl font-bold text-slate-900">Parear WhatsApp</h3>
+              <p className="text-xs text-slate-500">Aponte a câmera do seu WhatsApp para o código abaixo.</p>
             </div>
-            <div className="flex justify-center gap-3 pt-2">
+
+            {/* Tab navigation for QR or Pairing Code */}
+            <div className="flex p-1 bg-slate-100 rounded-xl text-xs font-medium">
               <button
-                type="button"
-                onClick={() => setShowQrModal(false)}
-                className="px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 rounded-xl font-medium border border-slate-200"
+                onClick={() => setModalMode('qr')}
+                className={`flex-1 py-2 rounded-lg transition-all ${modalMode === 'qr' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
               >
-                Fechar
+                Via QR Code
               </button>
+              <button
+                onClick={() => setModalMode('code')}
+                className={`flex-1 py-2 rounded-lg transition-all ${modalMode === 'code' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+              >
+                Via Código (8 dígitos)
+              </button>
+            </div>
+
+            {modalMode === 'qr' ? (
+              <div className="space-y-5 animate-in fade-in">
+                <div className="p-4 bg-white rounded-3xl inline-block border-2 border-slate-100 shadow-inner">
+                  {qrCodeDataUrl ? (
+                    <img src={qrCodeDataUrl} alt="WhatsApp QR Code" className="w-64 h-64 mx-auto rounded-xl" />
+                  ) : (
+                    <div className="w-64 h-64 flex items-center justify-center text-xs text-slate-400">Gerando QR Code seguro...</div>
+                  )}
+                </div>
+                <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-sky-500" />
+                  <span>Atualizando em {countdown}s</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 py-4 animate-in fade-in">
+                <div className="space-y-1.5 text-left">
+                  <label className="block text-xs font-semibold text-slate-700">Número do WhatsApp (com DDD)</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="Ex: 5511999998888" 
+                      value={inputPhone}
+                      onChange={(e) => setInputPhone(e.target.value)}
+                      className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20" 
+                    />
+                    <button 
+                      onClick={() => {
+                        setIsGeneratingCode(true);
+                        setTimeout(() => {
+                          setPairingCode('ABCD-1234');
+                          setIsGeneratingCode(false);
+                        }, 1000);
+                      }}
+                      disabled={isGeneratingCode || !inputPhone}
+                      className="px-4 py-2 bg-sky-500 text-white rounded-xl text-xs font-bold disabled:opacity-50"
+                    >
+                      {isGeneratingCode ? '...' : 'Gerar'}
+                    </button>
+                  </div>
+                </div>
+
+                {pairingCode && (
+                  <div className="p-6 bg-sky-50 border border-sky-100 rounded-2xl space-y-3 animate-in zoom-in-95">
+                    <p className="text-[10px] font-bold text-sky-700 uppercase tracking-widest">Código de Pareamento</p>
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="text-3xl font-mono font-black text-sky-900 tracking-tighter bg-white px-4 py-2 rounded-xl border border-sky-200 shadow-sm">{pairingCode}</span>
+                      <button onClick={() => copyToClipboard(pairingCode)} className="p-2.5 bg-white rounded-xl border border-sky-200 text-sky-600 hover:bg-sky-100">
+                        {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-sky-800 leading-tight">
+                      No WhatsApp, toque em "Aparelhos Conectados" &gt; "Conectar com número de telefone" e digite este código.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!globalVpsConfig.evolutionApiUrl && (
+              <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-3 text-left">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-[11px] text-amber-900">
+                    <strong>Aviso técnico:</strong> A VPS central ainda não foi configurada no Painel Master. A conexão real só funcionará após a configuração do servidor.
+                  </p>
+                  {isMasterAdmin && (
+                    <p className="text-[10px] text-amber-700 font-bold uppercase tracking-wider">
+                      💡 Dica Master: Configure a VPS na aba de Ajustes do Painel Master.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => handleConfirmConnection()}
-                className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-xl shadow-sm"
+                className="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold rounded-2xl shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
               >
-                Validar Conexão com Meu Número
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Validar Conexão com Meu Número</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQrModal(false)}
+                className="w-full py-2.5 text-xs text-slate-500 font-semibold hover:text-slate-800 transition-colors"
+              >
+                Cancelar
               </button>
             </div>
           </div>
@@ -432,53 +545,52 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
       {/* Add / Edit Operator Modal */}
       {isOperatorModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
-            <h3 className="text-lg font-bold text-slate-900">
-              {editingOperator ? 'Editar Atendente' : 'Adicionar Novo Atendente'}
+          <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 border border-slate-200">
+            <h3 className="text-xl font-bold text-slate-900">
+              {editingOperator ? 'Editar Atendente' : 'Novo Atendente'}
             </h3>
             <form onSubmit={handleSaveOperator} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Nome do Atendente *</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">Nome Completo *</label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: Carlos Mendes"
                   value={opName}
                   onChange={(e) => setOpName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Usuário de Login *</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">Usuário de Login *</label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: carlos"
                   value={opUsername}
                   onChange={(e) => setOpUsername(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Senha de Acesso *</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">Senha de Acesso *</label>
                 <input
                   type="text"
                   required
-                  placeholder="@Amb10340"
                   value={opPassword}
                   onChange={(e) => setOpPassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Perfil / Cargo</label>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">Cargo / Perfil</label>
                 <select
                   value={opRole}
                   onChange={(e) => setOpRole(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm"
                 >
                   <option value="Atendente">Atendente</option>
                   <option value="Gerente">Gerente</option>
@@ -486,19 +598,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-4 border-t">
                 <button
                   type="button"
                   onClick={() => setIsOperatorModalOpen(false)}
-                  className="px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 rounded-xl font-medium"
+                  className="px-4 py-2 text-xs text-slate-600 font-semibold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-xl shadow-sm"
+                  className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold rounded-xl shadow-md transition-all"
                 >
-                  Salvar Atendente
+                  Salvar Alterações
                 </button>
               </div>
             </form>
@@ -506,27 +618,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ activeTenant }) => {
         </div>
       )}
 
-      {/* Delete Operator Confirmation Modal */}
+      {/* Delete Operator Confirmation */}
       {opDeleteConfirmId && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-6 h-6" />
+          <div className="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl text-center space-y-5 border border-slate-200">
+            <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-8 h-8 text-rose-500" />
             </div>
-            <h3 className="font-bold text-slate-900 text-base">Confirmar Exclusão de Atendente</h3>
-            <p className="text-xs text-slate-500">Tem certeza que deseja remover este atendente do workspace?</p>
-            <div className="flex justify-center gap-3 pt-2">
-              <button
-                onClick={() => setOpDeleteConfirmId(null)}
-                className="px-4 py-2 text-xs text-slate-700 hover:bg-slate-100 rounded-lg font-medium"
-              >
-                Cancelar
-              </button>
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-slate-900">Remover Atendente?</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Este operador perderá o acesso imediato a este workspace. Deseja continuar?
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
               <button
                 onClick={() => handleDeleteOperator(opDeleteConfirmId)}
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl shadow-sm"
+                className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md transition-all"
               >
-                Sim, Excluir
+                Sim, Remover Atendente
+              </button>
+              <button
+                onClick={() => setOpDeleteConfirmId(null)}
+                className="w-full py-2.5 text-xs text-slate-500 font-semibold hover:text-slate-800 transition-colors"
+              >
+                Cancelar
               </button>
             </div>
           </div>
