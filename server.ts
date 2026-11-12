@@ -191,6 +191,32 @@ Pergunta do Atendente: "${query}"`;
     }
   });
 
+  // VPS Proxy Route to bypass Mixed Content (HTTP on HTTPS) and CORS issues
+  app.post("/api/proxy/evolution", async (req, res) => {
+    try {
+      const { targetUrl, method, apiKey, body } = req.body;
+
+      if (!targetUrl) {
+        return res.status(400).json({ error: "URL de destino é obrigatória." });
+      }
+
+      const response = await fetch(targetUrl, {
+        method: method || "GET",
+        headers: {
+          "apikey": apiKey || "",
+          "Content-Type": "application/json"
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      const data = await response.json().catch(() => ({}));
+      res.status(response.status).json(data);
+    } catch (error: any) {
+      console.error("Proxy error:", error);
+      res.status(500).json({ error: "Erro ao conectar com a VPS via Proxy." });
+    }
+  });
+
   // Vite middleware setup for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

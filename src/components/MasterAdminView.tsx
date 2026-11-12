@@ -62,32 +62,31 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
     setTestResult(null);
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-      const response = await fetch(`${config.evolutionApiUrl}/instance/fetchInstances`, {
-        method: 'GET',
+      const response = await fetch('/api/proxy/evolution', {
+        method: 'POST',
         headers: {
-          'apikey': config.globalApiToken,
           'Content-Type': 'application/json'
         },
-        signal: controller.signal
+        body: JSON.stringify({
+          targetUrl: `${config.evolutionApiUrl}/instance/fetchInstances`,
+          method: 'GET',
+          apiKey: config.globalApiToken
+        })
       });
 
-      clearTimeout(timeoutId);
-
       if (response.ok) {
-        setTestResult({ success: true, message: 'Conectado com sucesso! A Evolution API respondeu corretamente.' });
+        setTestResult({ success: true, message: 'Conectado com sucesso via Proxy! A VPS respondeu corretamente.' });
       } else {
+        const errorData = await response.json().catch(() => ({}));
         setTestResult({ 
           success: false, 
-          message: `Erro na API (${response.status}). Verifique se a URL e o Token Global estão corretos.` 
+          message: `Erro na VPS (${response.status}): ${errorData.message || 'Verifique a URL e o Token.'}` 
         });
       }
     } catch (error: any) {
       setTestResult({ 
         success: false, 
-        message: 'Falha na conexão. Verifique se a URL está correta e se o CORS está liberado na VPS.' 
+        message: 'Falha na comunicação com o servidor de proxy. Tente novamente em instantes.' 
       });
     } finally {
       setIsTesting(false);
@@ -335,15 +334,18 @@ export const MasterAdminView: React.FC<MasterAdminViewProps> = ({
 
             <form onSubmit={handleSaveConfig} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-700">URL da Evolution API (VPS)</label>
+                <label className="block text-xs font-semibold text-slate-700">URL da Evolution API (IP ou Domínio)</label>
                 <input
                   type="url"
                   required
-                  placeholder="https://sua-vps-whatsapp.com.br"
+                  placeholder="Ex: http://149.56.238.226:8080 ou https://api.laemadesign.com.br"
                   value={config.evolutionApiUrl}
                   onChange={(e) => setConfig({ ...config, evolutionApiUrl: e.target.value })}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                 />
+                <p className="text-[10px] text-slate-500 mt-1 italic">
+                  💡 Geralmente usa-se a porta :8080. Se não tiver SSL configurado, use <strong>http://</strong> em vez de https.
+                </p>
               </div>
 
               <div className="space-y-1.5">
